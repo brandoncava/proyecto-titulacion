@@ -52,15 +52,15 @@ require __DIR__ . '/../layout/cabecera.php';
     <input type="text"  name="nomcl" placeholder="ejm: Fausto Jesus Yovera Yamunaque" required>
 
    <label for="psw"><b>Comprobante de pago</b></label><span class="badge-warning">*</span>
-    <select required name="cxcom" id="cat">
-        <option>Seleccione</option>
+    <select required name="cxcom" id="cxcom">
+        <option value="">Seleccione</option>
         <option value="Boleta">Boleta</option>
        
     </select>
 
     <label for="psw"><b>Método de pago</b></label><span class="badge-warning">*</span>
-        <select required name="cxtcre" id="cat">
-            <option>Seleccione</option>
+        <select required name="cxtcre" id="cxtcre">
+            <option value="">Seleccione</option>
             <option value="Contado">Contado</option>
             <option value="Tarjeta">Tarjeta</option>
         </select>
@@ -79,18 +79,6 @@ require __DIR__ . '/../layout/cabecera.php';
     <?php
     include_once '../../backend/php/add_check.php'
 ?>
-    <script>
-$('#validate').click(function() {
-
-    if ($('#cxtcre').val().trim() === '') {
-        
-        swal("Debe seleccionar una opción");
-
-    } else {
-       swal("Campos correctos");
-    }
-});
-</script>
     <script type="text/javascript" src="../../backend/js/reenvio.js"></script>
 </body>
 </html>

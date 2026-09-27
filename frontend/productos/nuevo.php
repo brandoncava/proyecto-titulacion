@@ -62,7 +62,7 @@ require __DIR__ . '/../layout/cabecera.php';
     <label for="email"><b>Foto del producto</b></label><span class="badge-warning">*</span>
     <div class="upload-box">
         <div class="upload-img">
-            <img src="../../backend/img/subidas/" alt="">
+            <img alt="Vista previa" hidden>
         </div>
             <label for="upload-input" class="upload-label">Upload Image</label>
     <input type="file" name="foto" required  id="upload-input">
@@ -90,6 +90,7 @@ uploadInput.addEventListener('change',e => {
     if(e.target.files.length > 0) {
         const url = URL.createObjectURL(e.target.files[0]) ;
         previewImg.src = url ;
+        previewImg.hidden = false ;
     }
 })
 </script>
@@ -97,25 +98,24 @@ uploadInput.addEventListener('change',e => {
   <script src="../../backend/js/marc.js"></script>
   <?php include_once '../../backend/modal/md_marc.php' ?>
   <script type="text/javascript">
+    // alta de marca sin recargar la pagina, asi no se pierde lo escrito en el producto
     function marca(){
-       var trat = document.getElementById('trat').value; 
-       
-
-       var dataens = 'trat='+trat;
-
-       $.ajax({
-                    type: "POST", //definimos el método de envío
-                    url: "../../backend/php/add_marca.php", //el archivo al cual se enviaran
-                    data:dataens,
-                    cache: false,
-                    success: function(result){
-
-                    swal("¡Registrado!", "Se agrego correctamente", "success").then(function() {
-                            window.location = "../productos/nuevo.php";
-                        });
-}
-                }); 
-    };
+        $.post('../../backend/php/add_marca.php', {
+            trat: $('#trat').val(),
+            csrf_token: $('input[name=csrf_token]').first().val()
+        }, null, 'json').done(function (r) {
+            swal(r.ok ? '¡Registrado!' : 'Aviso', r.mensaje, r.ok ? 'success' : 'warning');
+            if (r.idmar) {
+                $.post('../../frontend/funciones/marc.php').done(function (opciones) {
+                    $('#marc').html(opciones).val(r.idmar);
+                });
+                $('#trat').val('');
+                $('#btns-modals').prop('checked', false);
+            }
+        }).fail(function () {
+            swal('Error', 'No se pudo guardar la marca.', 'error');
+        });
+    }
 </script>
 </body>
 </html>

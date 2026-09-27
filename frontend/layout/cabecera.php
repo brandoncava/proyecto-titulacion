@@ -16,11 +16,13 @@ $MENU = [
     'dashboard'   => ['reportes',    'administrador/escritorio.php', 'la-home',          'Dashboard'],
     'productos'   => ['productos',   'productos/mostrar.php',        'la-shopping-cart', 'Productos'],
     'categorias'  => ['catalogos',   'categorias/mostrar.php',       'la-paperclip',     'Categorias'],
+    'marcas'      => ['catalogos',   'marcas/mostrar.php',           'la-tags',          'Marcas'],
     'accesos'     => ['usuarios',    'accesos/mostrar.php',          'la-user-friends',  'Accesos'],
     'clientes'    => ['clientes',    'clientes/mostrar.php',         'la-user-friends',  'Clientes'],
     'proveedores' => ['proveedores', 'proveedores/mostrar.php',      'la-user-friends',  'Proveedores'],
     'ventas'      => ['ventas',      'ventas/venta.php',             'la-money-bill',    'Ventas'],
     'compras'     => ['compras',     'compra/mostrar.php',           'la-store',         'Compras'],
+    'reportes'    => ['reportes',    'reportes/ventas.php',          'la-chart-bar',     'Reportes'],
 ];
 ?>
 <!DOCTYPE html>

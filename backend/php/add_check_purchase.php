@@ -19,6 +19,11 @@ if (isset($_POST['order'])) {
         return;
     }
 
+    if (!in_array($method, METODOS_PAGO, true) || !in_array($tipc, COMPROBANTES, true)) {
+        avisar_y_redirigir('Faltan datos', 'Indica el comprobante y el método de pago.', 'warning', 'checkout.php');
+        return;
+    }
+
     try {
         $connect->beginTransaction();
 

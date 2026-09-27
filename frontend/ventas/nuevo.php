@@ -51,9 +51,6 @@ if($sentencia){
                                      <form class="form-inline" method="post" action="">
 <?php echo csrf_campo(); ?>
     <input type="hidden" name="prdt" value="<?php echo e($d->idprod); ?>">
-    <input type="hidden" name="pdrus" value="<?php echo e($_SESSION['id']); ?>">
-    <input type="hidden" name="name" value="<?php echo e($d->nomprd); ?>">
-    <input type="hidden" name="prec" value="<?php echo e($d->precio); ?>">
    
       <div class="form-group">
         <input type="number" name="p_qty" value="1" style="width:100px;" min="1" class="form-control" placeholder="Cantidad">

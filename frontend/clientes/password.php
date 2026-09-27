@@ -43,7 +43,7 @@ if($sentencia){
     <input type="hidden" name="clid" value="<?php echo e($d->idcli); ?>">
 
     <label for="email"><b>Nueva contraseña del cliente</b></label><span class="badge-warning">*</span>
-    <input type="password" placeholder="ejm: ********" name="pswcl"  required>
+    <input type="password" placeholder="ejm: ********" name="pswcl" minlength="6" required>
 
     <hr>
    

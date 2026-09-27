@@ -6,6 +6,8 @@ requiere_permiso_api('proveedores');
 
 if (isset($_POST['add_supplier'])) {
 
+    csrf_validar();
+
     $rucprv = trim($_POST['rcprv'] ?? '');
     $nomprv = trim($_POST['nomprv'] ?? '');
     $corrprv = trim($_POST['corrprv'] ?? '');

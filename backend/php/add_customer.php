@@ -6,6 +6,8 @@ requiere_permiso_api('clientes');
 
 if (isset($_POST['add_customer'])) {
 
+    csrf_validar();
+
     $tipd = trim($_POST['tipcl'] ?? '');
     $nudoc = trim($_POST['numcl'] ?? '');
     $nocl = trim($_POST['nomcl'] ?? '');

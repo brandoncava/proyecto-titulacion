@@ -54,6 +54,19 @@ if (isset($_POST['login'])) {
 
                 session_regenerate_id(true);
 
+                // "Mantener la sesion": la cookie sobrevive al cerrar el navegador
+                if (!empty($_POST['recordar'])) {
+                    $p = session_get_cookie_params();
+                    setcookie(session_name(), session_id(), [
+                        'expires'  => time() + SESION_RECORDADA,
+                        'path'     => $p['path'],
+                        'domain'   => $p['domain'],
+                        'secure'   => $p['secure'],
+                        'httponly' => true,
+                        'samesite' => 'Lax',
+                    ]);
+                }
+
                 $_SESSION['id'] = $data['id'];
                 $_SESSION['nombre'] = $data['nombre'];
                 $_SESSION['username'] = $data['username'];

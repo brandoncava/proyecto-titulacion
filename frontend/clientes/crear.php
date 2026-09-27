@@ -5,7 +5,7 @@ require_once __DIR__ . '/../../backend/config/auth.php';
 requiere_permiso('clientes');
 
 $seccion = 'clientes';
-$migas = 'Clientes / Perfil';
+$migas = 'Clientes / Crear acceso';
 require __DIR__ . '/../layout/cabecera.php';
 ?>
             
@@ -28,7 +28,7 @@ if($sentencia){
 <form action="" enctype="multipart/form-data" method="POST"  autocomplete="off">
 <?php echo csrf_campo(); ?>
   <div class="containerss">
-    <h1>Nuevo perfil de los clientes</h1>
+    <h1>Crear acceso del cliente</h1>
     <div class="alert-danger">
   <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span> 
   <strong>Importante!</strong> Es importante rellenar los campos con &nbsp;<span class="badge-warning">*</span>
@@ -40,11 +40,11 @@ if($sentencia){
     <input type="text" value="<?php echo e($d->nocl); ?> &nbsp; <?php echo e($d->apcl); ?>" placeholder="ejm: jjalver" disabled>
   
     <label for="email"><b>Nombre del usuario cliente</b></label><span class="badge-warning">*</span>
-    <input type="text" placeholder="ejm: jjalver" name="usrcl"  required>
+    <input type="text" placeholder="ejm: jjalver" name="usrcl" maxlength="15" required>
     <input type="hidden" name="clid" value="<?php echo e($d->idcli); ?>">
 
     <label for="email"><b>Contraseña del cliente</b></label><span class="badge-warning">*</span>
-    <input type="password" placeholder="ejm: ********" name="pswcl"  required>
+    <input type="password" placeholder="ejm: ********" name="pswcl" minlength="6" required>
 
     <label for="psw"><b>Rol</b></label>
     <select name="rolcl" required>
