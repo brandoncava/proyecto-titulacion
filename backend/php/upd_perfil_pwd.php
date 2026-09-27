@@ -36,7 +36,7 @@ swal("¡Actualizado!", "Contraseña actualizada correctamente", "success").then(
         {
            echo '<script type="text/javascript">
 swal("Error!", "No se pueden agregar datos,  comuníquese con el administrador ", "error").then(function() {
-            window.location = "../clientes/nuevo.php";
+            window.location = "../clientes/mostrar.php";
         });
         </script>';
             exit(0);

@@ -1,6 +1,6 @@
 # CK Computers — Sistema de ventas e inventario
 
-Sistema web para CK Computers (Trujillo): ventas, compras, productos, stock, clientes, proveedores y usuarios con perfiles.
+Sistema web para CK Computers (Trujillo): ventas, compras, productos, stock, categorías, marcas, clientes, proveedores, reporte de ventas por fechas y usuarios con perfiles.
 
 Hecho en PHP + MySQL/MariaDB, sin frameworks. Genera boletas y comprobantes en PDF con FPDF.
 
@@ -37,10 +37,10 @@ Todos los datos de la base son de prueba.
 
 | Usuario    | Contraseña      | Perfil        | Qué puede hacer |
 |------------|-----------------|---------------|-----------------|
-| `admin01`  | `Admin2026!`    | Administrador | Todo: dashboard, usuarios, anular ventas |
+| `admin01`  | `Admin2026!`    | Administrador | Todo: dashboard, reporte de ventas, usuarios, anular ventas |
 | `admin02`  | `Admin2026!`    | Administrador | Igual que `admin01` |
 | `cajero01` | `Cajero2026!`   | Cajero        | Ventas, productos (ver) y clientes |
-| `emple01`  | `Empleado2026!` | Empleado      | Compras, productos, proveedores y categorías |
+| `emple01`  | `Empleado2026!` | Empleado      | Compras, productos, proveedores, categorías y marcas |
 
 Los permisos de cada perfil se definen en `backend/config/roles.php`.
 
