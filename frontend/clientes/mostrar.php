@@ -56,12 +56,6 @@ if($sentencia){
                                     </td>
                                     <td>
                                        <a title="Actualizar" href="../clientes/editar.php?id=<?php echo e($d->idcli); ?>" class="fa fa-pencil tooltip"></a>
-                                       <?php if (trim((string)$d->username) === ''): ?>
-                                       <a title="Crear acceso del cliente" href="../clientes/crear.php?id=<?php echo e($d->idcli); ?>" class="fa fa-user-plus tooltip"></a>
-                                       <?php else: ?>
-                                       <a title="Cambiar contraseña (<?php echo e($d->username); ?>)" href="../clientes/password.php?id=<?php echo e($d->idcli); ?>" class="fa fa-key tooltip"></a>
-                                       <?php endif; ?>
-
 
                                      <form  onsubmit="return confirm('Realmente desea eliminar el registro?');" method='POST' action='<?php $_SERVER['PHP_SELF'] ?>'>
 <input type='hidden' name='idcli' value="<?php echo e($d->idcli); ?>">
