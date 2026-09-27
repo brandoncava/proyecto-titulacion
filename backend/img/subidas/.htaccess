@@ -1,0 +1,7 @@
+# no ejecutar scripts en esta carpeta
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<FilesMatch "\.(php|php\d|phtml|phar|cgi|pl|asp|aspx|jsp|sh)$">
+    Require all denied
+</FilesMatch>

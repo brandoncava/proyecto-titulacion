@@ -1,0 +1,68 @@
+/* Ajustes de DataTables al tema del panel (se carga despues de datatable.css) */
+
+.dataTables_wrapper .dataTables_info {
+    padding-top: 14px;
+    font-size: .85rem;
+    color: var(--text-grey);
+}
+
+/* ---------- Paginado ---------- */
+.dataTables_wrapper .dataTables_paginate {
+    padding-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 4px;
+}
+.dataTables_wrapper .dataTables_paginate > span {
+    display: flex;
+    gap: 4px;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button,
+.dataTables_wrapper .dataTables_paginate .paginate_button:active {
+    min-width: 34px;
+    height: 34px;
+    padding: 0 12px;
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .85rem;
+    color: var(--color-dark) !important;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-shadow: none;
+    transition: background .15s, border-color .15s, color .15s;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    color: var(--main-color) !important;
+    background: #f3edfd;
+    border-color: var(--main-color);
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    color: #fff !important;
+    background: var(--main-color);
+    border-color: var(--main-color);
+    font-weight: 600;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover,
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled:active {
+    color: #b5b1bb !important;
+    background: #f7f7f7;
+    border-color: #eee;
+    cursor: default;
+}
+.dataTables_wrapper .dataTables_paginate .ellipsis {
+    padding: 0 6px;
+    color: var(--text-grey);
+}
+
+@media screen and (max-width: 767px) {
+    .dataTables_wrapper .dataTables_paginate {
+        justify-content: center;
+    }
+}
