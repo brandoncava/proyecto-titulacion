@@ -3,61 +3,33 @@ require_once __DIR__ . '/../config/auth.php';
 require_once __DIR__ . '/../config/Conexion.php';
 
 requiere_permiso_api('clientes');
-if(isset($_POST['upd_customer']))
-{
+
+if (isset($_POST['upd_customer'])) {
 
     csrf_validar();
 
-    $idcli=trim($_POST['clid']);
-    $tipd=trim($_POST['tipcl']);
-    $nudoc=trim($_POST['numcl']);
-    $nocl=trim($_POST['namcl']);
-    $apcl=trim($_POST['apecl']);
-    $telfcl=trim($_POST['telcl']);
-    $username=trim($_POST['usrcl']);
-   
-    
-    
+    $idcli  = filter_input(INPUT_POST, 'clid', FILTER_VALIDATE_INT);
+    $tipd   = trim($_POST['tipcl'] ?? '');
+    $nudoc  = trim($_POST['numcl'] ?? '');
+    $nocl   = trim($_POST['namcl'] ?? '');
+    $apcl   = trim($_POST['apecl'] ?? '');
+    $telfcl = trim($_POST['telcl'] ?? '');
+
+    if (!$idcli || $tipd === '' || $nudoc === '' || $telfcl === '') {
+        avisar_y_redirigir('Error!', 'Completa el tipo y número de documento y el teléfono.', 'error', '../clientes/editar.php?id=' . (int)$idcli);
+        return;
+    }
+
     try {
+        $sql = $connect->prepare(
+            'UPDATE clientes SET tipd = ?, nudoc = ?, nocl = ?, apcl = ?, telfcl = ? WHERE idcli = ? LIMIT 1'
+        );
+        $sql->execute([$tipd, $nudoc, $nocl, $apcl, $telfcl, $idcli]);
 
-        $query = "UPDATE clientes SET tipd=:tipd,nudoc=:nudoc,nocl=:nocl,apcl=:apcl,telfcl=:telfcl,username=:username WHERE idcli=:idcli LIMIT 1";
-        $statement = $connect->prepare($query);
-
-        $data = [
-            ':tipd' => $tipd,
-            ':nudoc' => $nudoc,
-            ':nocl' => $nocl,
-            ':apcl' => $apcl,
-            ':telfcl' => $telfcl,
-            ':username' => $username,
-            ':idcli' => $idcli
-        ];
-        $query_execute = $statement->execute($data);
-
-        if($query_execute)
-        {
-            echo '<script type="text/javascript">
-swal("Actualizado!", "Se actualizó correctamente", "success").then(function() {
-            window.location = "../clientes/mostrar.php";
-        });
-        </script>';
-            exit(0);
-        }
-        else
-        {
-           echo '<script type="text/javascript">
-swal("Error!", "No se pueden agregar datos,  comuníquese con el administrador ", "error").then(function() {
-            window.location = "../clientes/nuevo.php";
-        });
-        </script>';
-            exit(0);
-        }
+        avisar_y_redirigir('Actualizado!', 'Se actualizó correctamente', 'success', '../clientes/mostrar.php');
 
     } catch (PDOException $e) {
-        echo $e->getMessage();
+        error_log('Error al actualizar el cliente: ' . $e->getMessage());
+        avisar_y_redirigir('Error!', 'No se pudo actualizar el cliente. Comuníquese con el administrador.', 'error', '../clientes/mostrar.php');
     }
 }
-?>
-
-
-

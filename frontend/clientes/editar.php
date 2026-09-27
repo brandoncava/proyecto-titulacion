@@ -39,7 +39,7 @@ if($sentencia){
     <label for="psw"><b>Tipo de documento</b></label><span class="badge-warning">*</span>
     <select required name="tipcl">
         <option value="<?php echo e($d->tipd); ?>"><?php echo e($d->tipd); ?></option>
-        <option>------------Seleccione-----------------</option>
+        <option value="" disabled>------------Seleccione-----------------</option>
         <option value="dni">DNI</option>
     </select>
 
@@ -54,9 +54,6 @@ if($sentencia){
      <label for="email"><b>Teléfono celular del cliente</b></label><span class="badge-warning">*</span>
     <input type="text" value="<?php echo e($d->telfcl); ?>" maxlength="9" onKeypress="if (event.keyCode < 45 || event.keyCode > 57) event.returnValue = false;" placeholder="ejm: 99898787" name="telcl"  required>
 
-  
-    <label for="email"><b>Nombre del usuario cliente</b></label><span class="badge-warning">*</span>
-    <input type="text" value="<?php echo e($d->username); ?>" placeholder="ejm: jjalver" name="usrcl"  required>
     <input type="hidden" name="clid" value="<?php echo e($d->idcli); ?>">
 
     <hr>

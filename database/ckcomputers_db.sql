@@ -124,9 +124,6 @@ CREATE TABLE `clientes` (
   `apcl` varchar(35) NOT NULL,
   `telfcl` char(9) NOT NULL,
   `state` tinyint(1) NOT NULL DEFAULT 1,
-  `username` varchar(15) NOT NULL,
-  `password` varchar(255) NOT NULL,
-  `rol` tinyint(1) NOT NULL DEFAULT 0,
   `fere` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`idcli`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -138,7 +135,7 @@ CREATE TABLE `clientes` (
 
 LOCK TABLES `clientes` WRITE;
 /*!40000 ALTER TABLE `clientes` DISABLE KEYS */;
-INSERT INTO `clientes` VALUES (1,'dni','78885848','Julian','Juarez Lopez','968586757',1,'Julian1','77c9749b451ab8c713c48037ddfbb2c4',2,'2026-09-11 04:57:39'),(2,'dni','76546564','Karla','Martinez','976575665',1,'kkmart21','96e79218965eb72c92a549dd5a330112',2,'2026-08-15 08:08:04'),(4,'dni','76564564','Leonardo','Flores','986858658',1,'','',0,'2026-08-19 08:56:52');
+INSERT INTO `clientes` VALUES (1,'dni','78885848','Julian','Juarez Lopez','968586757',1,'2026-09-11 04:57:39'),(2,'dni','76546564','Karla','Martinez','976575665',1,'2026-08-15 08:08:04'),(4,'dni','76564564','Leonardo','Flores','986858658',1,'2026-08-19 08:56:52');
 /*!40000 ALTER TABLE `clientes` ENABLE KEYS */;
 UNLOCK TABLES;
 
