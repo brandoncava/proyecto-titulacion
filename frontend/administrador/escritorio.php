@@ -35,7 +35,7 @@ require __DIR__ . '/../layout/cabecera.php';
                     <div class="card">
                         <div class="card-head">
                              <?php 
-                                            $sql = "SELECT SUM(total_price) total FROM orders";
+                                            $sql = "SELECT SUM(total_price) total FROM orders WHERE anulada = 0";
                                             $result = $connect->query($sql); //$pdo sería el objeto conexión
                                             $total = $result->fetchColumn();
 
@@ -233,23 +233,14 @@ if($sentencia){
     };
   
     function drawChart() {
-        var data = google.visualization.arrayToDataTable([
-            ['Country', 'Popularity'],
-            
-            <?php
-
-        $stmt = $connect->prepare("SELECT productos.idprod,productos.codpro ,productos.nomprd, productos.desprd, productos.foto, productos.precio, productos.stock, marca.idmar, marca.nomarc, categoria.idcate, categoria.nocate,productos.modelo, productos.peso, productos.state, productos.fere FROM productos INNER JOIN marca ON productos.idmar = marca.idmar INNER JOIN categoria ON productos.idcate = categoria.idcate");
-        $stmt->setFetchMode(PDO::FETCH_ASSOC);
-        $stmt->execute();
-
-        while($row = $stmt->fetch()) { 
-            echo "['".$row['nomprd']."', ".$row['stock']."],";
+        <?php
+        // json_encode escapa comillas y apostrofes de los nombres
+        $filas = [['Producto', 'Stock']];
+        foreach ($connect->query('SELECT nomprd, stock FROM productos WHERE state = 1') as $row) {
+            $filas[] = [$row->nomprd, (int)$row->stock];
         }
-
-            ?>
-
-            
-        ]);
+        ?>
+        var data = google.visualization.arrayToDataTable(<?php echo json_encode($filas, JSON_HEX_TAG | JSON_UNESCAPED_UNICODE); ?>);
 
         var options = {
             pieHole: 0.4,

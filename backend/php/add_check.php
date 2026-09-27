@@ -14,6 +14,11 @@ if (isset($_POST['order'])) {
     $method = trim($_POST['cxtcre'] ?? '');
     $tipc = trim($_POST['cxcom'] ?? '');
 
+    if ($nomcl === '' || !in_array($method, METODOS_PAGO, true) || !in_array($tipc, COMPROBANTES, true)) {
+        avisar_y_redirigir('Faltan datos', 'Indica el cliente, el comprobante y el método de pago.', 'warning', 'checkout.php');
+        return;
+    }
+
     try {
         $connect->beginTransaction();
 

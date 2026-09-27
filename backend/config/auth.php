@@ -4,7 +4,12 @@
 require_once __DIR__ . '/roles.php';
 require_once __DIR__ . '/helpers.php';
 
+// duracion de "Mantener la sesion" en el login (30 dias)
+define('SESION_RECORDADA', 60 * 60 * 24 * 30);
+
 if (session_status() === PHP_SESSION_NONE) {
+    // que php no borre los datos de la sesion antes de que venza la cookie
+    ini_set('session.gc_maxlifetime', (string)SESION_RECORDADA);
     session_start();
 }
 

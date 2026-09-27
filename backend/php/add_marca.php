@@ -1,14 +1,23 @@
 <?php
+// alta rapida de marca desde el modal de productos/nuevo.php (AJAX, responde JSON)
 require_once __DIR__ . '/../config/auth.php';
 require_once __DIR__ . '/../config/Conexion.php';
 
 requiere_permiso_api('catalogos');
+csrf_validar();
+
+header('Content-Type: application/json; charset=utf-8');
+
+function responder($ok, $mensaje, $idmar = null)
+{
+    echo json_encode(['ok' => $ok, 'mensaje' => $mensaje, 'idmar' => $idmar], JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
 $nombre = trim($_POST['trat'] ?? '');
 
 if ($nombre === '') {
-    http_response_code(400);
-    exit('Indica el nombre de la marca.');
+    responder(false, 'Indica el nombre de la marca.');
 }
 
 // si estaba dada de baja se reactiva en vez de duplicar
@@ -18,13 +27,12 @@ $existente = $buscar->fetch();
 
 if ($existente) {
     if ((int)$existente->state === 1) {
-        exit('Esa marca ya esta registrada');
+        responder(false, 'Esa marca ya está registrada.', (int)$existente->idmar);
     }
     $connect->prepare('UPDATE marca SET state = 1 WHERE idmar = ?')->execute([$existente->idmar]);
-    exit('Marca reactivada correctamente');
+    responder(true, 'La marca estaba dada de baja y se volvió a activar.', (int)$existente->idmar);
 }
 
-$insertar = $connect->prepare('INSERT INTO marca (nomarc, state) VALUES (?, 1)');
-$insertar->execute([$nombre]);
+$connect->prepare('INSERT INTO marca (nomarc, state) VALUES (?, 1)')->execute([$nombre]);
 
-echo 'Agregado correctamente';
+responder(true, 'Marca agregada correctamente.', (int)$connect->lastInsertId());

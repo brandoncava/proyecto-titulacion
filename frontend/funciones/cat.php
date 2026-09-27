@@ -4,7 +4,7 @@ require_once __DIR__ . "/../../backend/config/auth.php";
 requiere_sesion();
 
  require '../../backend/config/Conexion.php';
- echo '<option value="0">Seleccione</option>';
+ echo '<option value="">Seleccione</option>';
  $stmt = $connect->prepare('SELECT * FROM `categoria` WHERE state = 1 ORDER BY idcate ASC');
 
   $stmt->execute();

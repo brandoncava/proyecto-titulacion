@@ -54,7 +54,7 @@ include_once '../backend/php/login.php';
         </div>
 
         <label class="checkbox-container">
-          <input type="checkbox">
+          <input type="checkbox" name="recordar" value="1"<?php echo !empty($_POST['recordar']) ? ' checked' : ''; ?>>
           <span class="checkmark"></span>
           Mantener la sesión
         </label>

@@ -6,6 +6,8 @@ requiere_permiso_api('catalogos');
 
 if (isset($_POST['add_category'])) {
 
+    csrf_validar();
+
     $nocate = trim($_POST['catnom'] ?? '');
 
     if ($nocate === '') {
