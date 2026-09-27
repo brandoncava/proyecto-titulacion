@@ -105,7 +105,7 @@ CREATE TABLE `categoria` (
 
 LOCK TABLES `categoria` WRITE;
 /*!40000 ALTER TABLE `categoria` DISABLE KEYS */;
-INSERT INTO `categoria` VALUES (2,'LAPTOPS',0,'2026-09-15 03:20:47'),(4,'PCS',0,'2026-09-15 03:20:53'),(5,'SERVIDORESS',1,'2026-09-15 03:21:06'),(6,'PROYECTORES',1,'2022-11-15 01:16:16'),(7,'IMPRESORAS',1,'2022-11-15 01:35:15'),(8,'MONITORES',1,'2022-11-15 01:16:44'),(9,'COMPONENTES',1,'2022-11-15 01:17:11');
+INSERT INTO `categoria` VALUES (2,'LAPTOPS',0,'2026-09-15 03:20:47'),(4,'PCS',0,'2026-09-15 03:20:53'),(5,'SERVIDORESS',1,'2026-09-15 03:21:06'),(6,'PROYECTORES',1,'2026-08-15 02:16:16'),(7,'IMPRESORAS',1,'2026-08-15 02:35:15'),(8,'MONITORES',1,'2026-08-15 02:16:44'),(9,'COMPONENTES',1,'2026-08-15 02:17:11');
 /*!40000 ALTER TABLE `categoria` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -138,7 +138,7 @@ CREATE TABLE `clientes` (
 
 LOCK TABLES `clientes` WRITE;
 /*!40000 ALTER TABLE `clientes` DISABLE KEYS */;
-INSERT INTO `clientes` VALUES (1,'dni','78885848','Julian','Juarez Lopez','968586757',1,'Julian1','77c9749b451ab8c713c48037ddfbb2c4',2,'2026-09-11 04:57:39'),(2,'dni','76546564','Karla','Martinez','976575665',1,'kkmart21','96e79218965eb72c92a549dd5a330112',2,'2022-11-15 07:08:04'),(4,'dni','76564564','Leonardo','Flores','986858658',1,'','',0,'2022-11-19 07:56:52');
+INSERT INTO `clientes` VALUES (1,'dni','78885848','Julian','Juarez Lopez','968586757',1,'Julian1','77c9749b451ab8c713c48037ddfbb2c4',2,'2026-09-11 04:57:39'),(2,'dni','76546564','Karla','Martinez','976575665',1,'kkmart21','96e79218965eb72c92a549dd5a330112',2,'2026-08-15 08:08:04'),(4,'dni','76564564','Leonardo','Flores','986858658',1,'','',0,'2026-08-19 08:56:52');
 /*!40000 ALTER TABLE `clientes` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -164,7 +164,7 @@ CREATE TABLE `marca` (
 
 LOCK TABLES `marca` WRITE;
 /*!40000 ALTER TABLE `marca` DISABLE KEYS */;
-INSERT INTO `marca` VALUES (1,'Lenovo',1,'2022-11-16 00:24:00'),(2,'hp',1,'2022-11-19 08:00:23');
+INSERT INTO `marca` VALUES (1,'Lenovo',1,'2026-08-16 01:24:00'),(2,'hp',1,'2026-08-19 09:00:23');
 /*!40000 ALTER TABLE `marca` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -200,7 +200,7 @@ CREATE TABLE `orders` (
 
 LOCK TABLES `orders` WRITE;
 /*!40000 ALTER TABLE `orders` DISABLE KEYS */;
-INSERT INTO `orders` VALUES (1,1,'Manuel Jose Flores Ayala','Seleccione','LAPTOP LENOVO V14 IIL, INTEL CORE I3-1005G1, 4GB, 1TB, 14″ HD ( 3 ),  PC Todo en Uno Lenovo IdeaCentre 3, Intel Core i5-10400T 2.4GHz, RAM 8GB, HDD 1TB, Wi-FI, BT, LED 24 ( 4 )',19668.00,'2022-11-17 00:00:00','Anulado',1,'2026-09-27 02:47:44','anulación','Boleta'),(2,1,'Renato Fautisno Velarde Trelles','Contado',' PC Todo en Uno Lenovo IdeaCentre 3, Intel Core i5-10400T 2.4GHz, RAM 8GB, HDD 1TB, Wi-FI, BT, LED 24 ( 3 )',9297.00,'2022-11-18 00:00:00','Anulado',1,'2026-09-27 02:54:56','a','Boleta'),(3,1,'Karla Solis Urbina','Contado',' PC Todo en Uno Lenovo IdeaCentre 3, Intel Core i5-10400T 2.4GHz, RAM 8GB, HDD 1TB, Wi-FI, BT, LED 24 ( 1 )',3099.00,'2022-11-18 00:00:00','Aceptado',0,NULL,NULL,'Boleta'),(4,1,'OSVALDO SALAZAR YOVERA','Contado','LAPTO hP ULTRA ( 1 )',2400.00,'2022-11-19 00:00:00','Aceptado',0,NULL,NULL,'Boleta'),(5,1,'Sofia Castillo Perez','Contado','LAPTOP HP ULTRA ( 1 )',2400.00,'2026-09-11 00:00:00','Aceptado',0,NULL,NULL,'Boleta'),(6,1,'Ana Vera Cruz','Tarjeta','LAPTOP HP ULTRA ( 1 )',2400.00,'2026-09-11 00:00:00','Aceptado',0,NULL,NULL,'Boleta');
+INSERT INTO `orders` VALUES (1,1,'Manuel Jose Flores Ayala','Seleccione','LAPTOP LENOVO V14 IIL, INTEL CORE I3-1005G1, 4GB, 1TB, 14″ HD ( 3 ),  PC Todo en Uno Lenovo IdeaCentre 3, Intel Core i5-10400T 2.4GHz, RAM 8GB, HDD 1TB, Wi-FI, BT, LED 24 ( 4 )',19668.00,'2026-08-17 00:00:00','Anulado',1,'2026-09-27 02:47:44','anulación','Boleta'),(2,1,'Renato Fautisno Velarde Trelles','Contado',' PC Todo en Uno Lenovo IdeaCentre 3, Intel Core i5-10400T 2.4GHz, RAM 8GB, HDD 1TB, Wi-FI, BT, LED 24 ( 3 )',9297.00,'2026-08-18 00:00:00','Anulado',1,'2026-09-27 02:54:56','a','Boleta'),(3,1,'Karla Solis Urbina','Contado',' PC Todo en Uno Lenovo IdeaCentre 3, Intel Core i5-10400T 2.4GHz, RAM 8GB, HDD 1TB, Wi-FI, BT, LED 24 ( 1 )',3099.00,'2026-08-18 00:00:00','Aceptado',0,NULL,NULL,'Boleta'),(4,1,'OSVALDO SALAZAR YOVERA','Contado','LAPTO hP ULTRA ( 1 )',2400.00,'2026-08-19 00:00:00','Aceptado',0,NULL,NULL,'Boleta'),(5,1,'Sofia Castillo Perez','Contado','LAPTOP HP ULTRA ( 1 )',2400.00,'2026-09-11 00:00:00','Aceptado',0,NULL,NULL,'Boleta'),(6,1,'Ana Vera Cruz','Tarjeta','LAPTOP HP ULTRA ( 1 )',2400.00,'2026-09-11 00:00:00','Aceptado',0,NULL,NULL,'Boleta');
 /*!40000 ALTER TABLE `orders` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -265,7 +265,7 @@ CREATE TABLE `orders_purchase` (
 
 LOCK TABLES `orders_purchase` WRITE;
 /*!40000 ALTER TABLE `orders_purchase` DISABLE KEYS */;
-INSERT INTO `orders_purchase` VALUES (1,1,1,'Contado','LAPTOP LENOVO V14 IIL, INTEL CORE I3-1005G1, 4GB, 1TB, 14″ HD ( 1 ),  PC Todo en Uno Lenovo IdeaCentre 3, Intel Core i5-10400T 2.4GHz, RAM 8GB, HDD 1TB, Wi-FI, BT, LED 24 ( 3 )',11721.00,'2022-11-18 00:00:00','Aceptado','Boleta');
+INSERT INTO `orders_purchase` VALUES (1,1,1,'Contado','LAPTOP LENOVO V14 IIL, INTEL CORE I3-1005G1, 4GB, 1TB, 14″ HD ( 1 ),  PC Todo en Uno Lenovo IdeaCentre 3, Intel Core i5-10400T 2.4GHz, RAM 8GB, HDD 1TB, Wi-FI, BT, LED 24 ( 3 )',11721.00,'2026-08-18 00:00:00','Aceptado','Boleta');
 /*!40000 ALTER TABLE `orders_purchase` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -336,7 +336,7 @@ CREATE TABLE `productos` (
 
 LOCK TABLES `productos` WRITE;
 /*!40000 ALTER TABLE `productos` DISABLE KEYS */;
-INSERT INTO `productos` VALUES (1,'33333333333333','LAPTOP LENOVO V14 IIL, INTEL CORE I3-1005G1, 4GB, 1TB, 14″ HD','Procesador: Intel Core i3\r\nTipo de disco duro: SATA\r\nTarjeta gráfica: Intel® UHD Graphics\r\nDisco Duro: 1TB\r\nMemoria RAM: 4GB','825226.jpg',2424.00,'99',1,2,'Lenovo','A partir de 1.6 Kg',1,'2026-09-15 03:17:45'),(2,'74355345345324',' PC Todo en Uno Lenovo IdeaCentre 3, Intel Core i5-10400T 2.4GHz, RAM 8GB, HDD 1TB, Wi-FI, BT, LED 24\" Full HD, Windows 10 Home SP','Intel® Core™ i5-10400T (2.0 / 3.6 GHz, 6 núcleos) Décima generación \r\nRAM 8 GB DDR4 ampliable\r\nDisco Duro de 1TB SATA\r\nPantalla 24\" Full HD (1920x1080) IPS, marcos reducidos.\r\nWiFi, Buetooth, Cámara web 720p\r\nTeclado & Mouse alámbricos\r\nWindows 10 Home SP','651402.jpg',3099.00,'20',1,4,'Lenovo','30kg',1,'2022-11-17 01:26:23'),(4,'96785756756756','LAPTOP HP ULTRA','ESTA ES UNA LAPTOP HP ULTRA','211473.jpg',2400.00,'90',2,2,'hP','100',1,'2026-09-15 03:35:05');
+INSERT INTO `productos` VALUES (1,'33333333333333','LAPTOP LENOVO V14 IIL, INTEL CORE I3-1005G1, 4GB, 1TB, 14″ HD','Procesador: Intel Core i3\r\nTipo de disco duro: SATA\r\nTarjeta gráfica: Intel® UHD Graphics\r\nDisco Duro: 1TB\r\nMemoria RAM: 4GB','825226.jpg',2424.00,'99',1,2,'Lenovo','A partir de 1.6 Kg',1,'2026-09-15 03:17:45'),(2,'74355345345324',' PC Todo en Uno Lenovo IdeaCentre 3, Intel Core i5-10400T 2.4GHz, RAM 8GB, HDD 1TB, Wi-FI, BT, LED 24\" Full HD, Windows 10 Home SP','Intel® Core™ i5-10400T (2.0 / 3.6 GHz, 6 núcleos) Décima generación \r\nRAM 8 GB DDR4 ampliable\r\nDisco Duro de 1TB SATA\r\nPantalla 24\" Full HD (1920x1080) IPS, marcos reducidos.\r\nWiFi, Buetooth, Cámara web 720p\r\nTeclado & Mouse alámbricos\r\nWindows 10 Home SP','651402.jpg',3099.00,'20',1,4,'Lenovo','30kg',1,'2026-08-17 02:26:23'),(4,'96785756756756','LAPTOP HP ULTRA','ESTA ES UNA LAPTOP HP ULTRA','211473.jpg',2400.00,'90',2,2,'hP','100',1,'2026-09-15 03:35:05');
 /*!40000 ALTER TABLE `productos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -364,7 +364,7 @@ CREATE TABLE `proveedores` (
 
 LOCK TABLES `proveedores` WRITE;
 /*!40000 ALTER TABLE `proveedores` DISABLE KEYS */;
-INSERT INTO `proveedores` VALUES (1,'20568005491','TIENDAS DE COMPUTO EIRL','',1,'2022-11-15 18:14:16'),(2,'20511697353','EQUIPOS Y ACCESORIOS DE COMPUTO S.A.C','',1,'2022-11-15 18:15:17'),(4,'10399333426','MANRIQUE SA','',1,'2022-11-19 07:58:35');
+INSERT INTO `proveedores` VALUES (1,'20568005491','TIENDAS DE COMPUTO EIRL','',1,'2026-08-15 19:14:16'),(2,'20511697353','EQUIPOS Y ACCESORIOS DE COMPUTO S.A.C','',1,'2026-08-15 19:15:17'),(4,'10399333426','MANRIQUE SA','',1,'2026-08-19 08:58:35');
 /*!40000 ALTER TABLE `proveedores` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -394,7 +394,7 @@ CREATE TABLE `usuarios` (
 
 LOCK TABLES `usuarios` WRITE;
 /*!40000 ALTER TABLE `usuarios` DISABLE KEYS */;
-INSERT INTO `usuarios` VALUES (1,'Administrador1','admin01','admin01@gmail.com','$2y$10$cbIq/7G.abG7WhOiqcCpEuJNvWSdnrAZwctaKCX1F5XV/MWJZEQsi',1,'2026-09-15 03:11:57',1),(3,'Jorge Luna','admin02','jorge@gmail.com','$2y$10$cbIq/7G.abG7WhOiqcCpEuJNvWSdnrAZwctaKCX1F5XV/MWJZEQsi',1,'2026-09-15 03:11:57',1),(4,'Ana Cajera','cajero01','cajero@ck.cl','$2y$10$bNz89N6bk442RgMrWLMSd.WBw8lzHRnMpBpmRuz8lt0/eQte976i.',2,'2026-09-15 03:14:33',1),(5,'Beto Empleado','emple01','emple@ck.cl','$2y$10$vRYRqZDf4WaHoOWCuTbKVOVygi3PyYmXbPkrFTcKjKLk0FGDLKuh2',3,'2026-09-15 03:14:33',1);
+INSERT INTO `usuarios` VALUES (1,'Administrador1','admin01','admin01@gmail.com','$2y$10$cuDEfnABx26/QlkBCqbB7.3FJRgo2Lt3T3UZX5LI4kquezVLxAgQC',1,'2026-09-15 03:11:57',1),(3,'Jorge Luna','admin02','jorge@gmail.com','$2y$10$cuDEfnABx26/QlkBCqbB7.3FJRgo2Lt3T3UZX5LI4kquezVLxAgQC',1,'2026-09-15 03:11:57',1),(4,'Ana Cajera','cajero01','cajero@ck.cl','$2y$10$eZp4canmuAHv3wT4Pu1rP.KzS93BKc/OkJCMauKOd7XT5SEfh9rBe',2,'2026-09-15 03:14:33',1),(5,'Beto Empleado','emple01','emple@ck.cl','$2y$10$qwHYEBz16cZnOP/FFcEKleJql1/2GH1/sUkAIYZobqNnt0.tQJPt6',3,'2026-09-15 03:14:33',1);
 /*!40000 ALTER TABLE `usuarios` ENABLE KEYS */;
 UNLOCK TABLES;
 
