@@ -119,13 +119,14 @@ DROP TABLE IF EXISTS `clientes`;
 CREATE TABLE `clientes` (
   `idcli` int(11) NOT NULL AUTO_INCREMENT,
   `tipd` varchar(25) NOT NULL,
-  `nudoc` char(8) NOT NULL,
-  `nocl` varchar(35) NOT NULL,
+  `nudoc` varchar(11) NOT NULL,
+  `nocl` varchar(150) NOT NULL,
   `apcl` varchar(35) NOT NULL,
-  `telfcl` char(9) NOT NULL,
+  `telfcl` char(9) NOT NULL DEFAULT '',
   `state` tinyint(1) NOT NULL DEFAULT 1,
   `fere` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`idcli`)
+  PRIMARY KEY (`idcli`),
+  UNIQUE KEY `uq_clientes_nudoc` (`nudoc`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -135,7 +136,7 @@ CREATE TABLE `clientes` (
 
 LOCK TABLES `clientes` WRITE;
 /*!40000 ALTER TABLE `clientes` DISABLE KEYS */;
-INSERT INTO `clientes` VALUES (1,'dni','78885848','Julian','Juarez Lopez','968586757',1,'2026-09-11 04:57:39'),(2,'dni','76546564','Karla','Martinez','976575665',1,'2026-08-15 08:08:04'),(4,'dni','76564564','Leonardo','Flores','986858658',1,'2026-08-19 08:56:52');
+INSERT INTO `clientes` VALUES (1,'DNI','78885848','Julian','Juarez Lopez','968586757',1,'2026-09-11 04:57:39'),(2,'DNI','76546564','Karla','Martinez','976575665',1,'2026-08-15 08:08:04'),(4,'DNI','76564564','Leonardo','Flores','986858658',1,'2026-08-19 08:56:52');
 /*!40000 ALTER TABLE `clientes` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -166,6 +167,45 @@ INSERT INTO `marca` VALUES (1,'Lenovo',1,'2026-08-16 01:24:00'),(2,'hp',1,'2026-
 UNLOCK TABLES;
 
 --
+-- Table structure for table `movimientos_inventario`
+--
+
+DROP TABLE IF EXISTS `movimientos_inventario`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `movimientos_inventario` (
+  `idmov` int(11) NOT NULL AUTO_INCREMENT,
+  `idprod` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `tipo` varchar(15) NOT NULL COMMENT 'Saldo inicial, Compra, Venta, Anulacion o Ajuste',
+  `cantidad` int(11) NOT NULL COMMENT 'positiva si entra, negativa si sale',
+  `stock_resultante` int(11) NOT NULL,
+  `idord` int(11) DEFAULT NULL COMMENT 'venta o anulacion',
+  `idordpur` int(11) DEFAULT NULL COMMENT 'compra',
+  `fecha` datetime NOT NULL,
+  PRIMARY KEY (`idmov`),
+  KEY `idx_mov_producto` (`idprod`,`fecha`),
+  KEY `idx_mov_usuario` (`user_id`),
+  KEY `idx_mov_venta` (`idord`),
+  KEY `idx_mov_compra` (`idordpur`),
+  CONSTRAINT `mov_ibfk_1` FOREIGN KEY (`idprod`) REFERENCES `productos` (`idprod`),
+  CONSTRAINT `mov_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `usuarios` (`id`),
+  CONSTRAINT `mov_ibfk_3` FOREIGN KEY (`idord`) REFERENCES `orders` (`idord`),
+  CONSTRAINT `mov_ibfk_4` FOREIGN KEY (`idordpur`) REFERENCES `orders_purchase` (`idordpur`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `movimientos_inventario`
+--
+
+LOCK TABLES `movimientos_inventario` WRITE;
+/*!40000 ALTER TABLE `movimientos_inventario` DISABLE KEYS */;
+INSERT INTO `movimientos_inventario` VALUES (1,1,1,'Saldo inicial',99,99,NULL,NULL,'2026-10-19 20:38:39'),(2,2,1,'Saldo inicial',20,20,NULL,NULL,'2026-10-19 20:38:39'),(3,4,1,'Saldo inicial',90,90,NULL,NULL,'2026-10-19 20:38:39');
+/*!40000 ALTER TABLE `movimientos_inventario` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `orders`
 --
 
@@ -175,19 +215,32 @@ DROP TABLE IF EXISTS `orders`;
 CREATE TABLE `orders` (
   `idord` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
+  `idcli` int(11) DEFAULT NULL,
   `nomcl` text NOT NULL,
   `method` varchar(50) NOT NULL,
   `total_products` text NOT NULL,
   `total_price` decimal(10,2) NOT NULL,
+  `subtotal_sin_igv` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `igv` decimal(10,2) NOT NULL DEFAULT 0.00,
   `placed_on` datetime NOT NULL,
   `payment_status` varchar(20) NOT NULL,
   `anulada` tinyint(1) NOT NULL DEFAULT 0,
   `anulada_on` datetime DEFAULT NULL,
   `motivo_anulacion` varchar(255) DEFAULT NULL,
   `tipc` varchar(15) NOT NULL,
+  `idserie` int(11) DEFAULT NULL,
+  `serie` char(4) DEFAULT NULL,
+  `numero` int(10) unsigned DEFAULT NULL,
+  `doc_tipo` varchar(10) DEFAULT NULL,
+  `doc_num` varchar(11) DEFAULT NULL,
   PRIMARY KEY (`idord`),
+  UNIQUE KEY `uq_orders_comprobante` (`serie`,`numero`),
   KEY `orders_ibfk_1` (`user_id`),
-  CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `usuarios` (`id`)
+  KEY `idx_orders_cliente` (`idcli`),
+  KEY `idx_orders_serie` (`idserie`),
+  CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `usuarios` (`id`),
+  CONSTRAINT `orders_ibfk_2` FOREIGN KEY (`idcli`) REFERENCES `clientes` (`idcli`) ON UPDATE CASCADE,
+  CONSTRAINT `orders_ibfk_3` FOREIGN KEY (`idserie`) REFERENCES `series` (`idserie`)
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -197,7 +250,7 @@ CREATE TABLE `orders` (
 
 LOCK TABLES `orders` WRITE;
 /*!40000 ALTER TABLE `orders` DISABLE KEYS */;
-INSERT INTO `orders` VALUES (1,1,'Manuel Jose Flores Ayala','Contado','LAPTOP LENOVO V14 IIL, INTEL CORE I3-1005G1, 4GB, 1TB, 14″ HD ( 3 ),  PC Todo en Uno Lenovo IdeaCentre 3, Intel Core i5-10400T 2.4GHz, RAM 8GB, HDD 1TB, Wi-FI, BT, LED 24 ( 4 )',19668.00,'2026-08-17 00:00:00','Anulado',1,'2026-09-27 02:47:44','anulación','Boleta'),(2,1,'Renato Fautisno Velarde Trelles','Contado',' PC Todo en Uno Lenovo IdeaCentre 3, Intel Core i5-10400T 2.4GHz, RAM 8GB, HDD 1TB, Wi-FI, BT, LED 24 ( 3 )',9297.00,'2026-08-18 00:00:00','Anulado',1,'2026-09-27 02:54:56','a','Boleta'),(3,1,'Karla Solis Urbina','Contado',' PC Todo en Uno Lenovo IdeaCentre 3, Intel Core i5-10400T 2.4GHz, RAM 8GB, HDD 1TB, Wi-FI, BT, LED 24 ( 1 )',3099.00,'2026-08-18 00:00:00','Aceptado',0,NULL,NULL,'Boleta'),(4,1,'OSVALDO SALAZAR YOVERA','Contado','LAPTO hP ULTRA ( 1 )',2400.00,'2026-08-19 00:00:00','Aceptado',0,NULL,NULL,'Boleta'),(5,1,'Sofia Castillo Perez','Contado','LAPTOP HP ULTRA ( 1 )',2400.00,'2026-09-11 00:00:00','Aceptado',0,NULL,NULL,'Boleta'),(6,1,'Ana Vera Cruz','Tarjeta','LAPTOP HP ULTRA ( 1 )',2400.00,'2026-09-11 00:00:00','Aceptado',0,NULL,NULL,'Boleta');
+INSERT INTO `orders` VALUES (1,1,NULL,'Manuel Jose Flores Ayala','Contado','LAPTOP LENOVO V14 IIL, INTEL CORE I3-1005G1, 4GB, 1TB, 14″ HD ( 3 ),  PC Todo en Uno Lenovo IdeaCentre 3, Intel Core i5-10400T 2.4GHz, RAM 8GB, HDD 1TB, Wi-FI, BT, LED 24 ( 4 )',19668.00,16667.80,3000.20,'2026-08-17 00:00:00','Anulado',1,'2026-09-27 02:47:44','anulación','Boleta',1,'B001',1,NULL,NULL),(2,1,NULL,'Renato Fautisno Velarde Trelles','Contado',' PC Todo en Uno Lenovo IdeaCentre 3, Intel Core i5-10400T 2.4GHz, RAM 8GB, HDD 1TB, Wi-FI, BT, LED 24 ( 3 )',9297.00,7878.81,1418.19,'2026-08-18 00:00:00','Anulado',1,'2026-09-27 02:54:56','a','Boleta',1,'B001',2,NULL,NULL),(3,1,NULL,'Karla Solis Urbina','Contado',' PC Todo en Uno Lenovo IdeaCentre 3, Intel Core i5-10400T 2.4GHz, RAM 8GB, HDD 1TB, Wi-FI, BT, LED 24 ( 1 )',3099.00,2626.27,472.73,'2026-08-18 00:00:00','Aceptado',0,NULL,NULL,'Boleta',1,'B001',3,NULL,NULL),(4,1,NULL,'OSVALDO SALAZAR YOVERA','Contado','LAPTO hP ULTRA ( 1 )',2400.00,2033.90,366.10,'2026-08-19 00:00:00','Aceptado',0,NULL,NULL,'Boleta',1,'B001',4,NULL,NULL),(5,1,NULL,'Sofia Castillo Perez','Contado','LAPTOP HP ULTRA ( 1 )',2400.00,2033.90,366.10,'2026-09-11 00:00:00','Aceptado',0,NULL,NULL,'Boleta',1,'B001',5,NULL,NULL),(6,1,NULL,'Ana Vera Cruz','Tarjeta','LAPTOP HP ULTRA ( 1 )',2400.00,2033.90,366.10,'2026-09-11 00:00:00','Aceptado',0,NULL,NULL,'Boleta',1,'B001',6,NULL,NULL);
 /*!40000 ALTER TABLE `orders` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -247,12 +300,23 @@ CREATE TABLE `orders_purchase` (
   `method` varchar(50) NOT NULL,
   `total_products` text NOT NULL,
   `total_price` decimal(10,2) NOT NULL,
+  `subtotal_sin_igv` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `igv` decimal(10,2) NOT NULL DEFAULT 0.00,
   `placed_on` datetime NOT NULL,
   `payment_status` varchar(20) NOT NULL,
   `tipc` varchar(15) NOT NULL,
+  `anulada` tinyint(1) NOT NULL DEFAULT 0,
+  `anulada_on` datetime DEFAULT NULL,
+  `motivo_anulacion` varchar(255) DEFAULT NULL,
+  `serie_doc` char(4) DEFAULT NULL,
+  `numero_doc` char(8) DEFAULT NULL,
+  `fecha_emision` date DEFAULT NULL,
   PRIMARY KEY (`idordpur`),
+  UNIQUE KEY `uq_compra_comprobante` (`idprov`,`tipc`,`serie_doc`,`numero_doc`),
   KEY `idprov` (`idprov`),
-  CONSTRAINT `orders_purchase_ibfk_1` FOREIGN KEY (`idprov`) REFERENCES `proveedores` (`idprov`)
+  KEY `idx_orders_purchase_usuario` (`user_id`),
+  CONSTRAINT `orders_purchase_ibfk_1` FOREIGN KEY (`idprov`) REFERENCES `proveedores` (`idprov`),
+  CONSTRAINT `orders_purchase_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `usuarios` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -262,7 +326,7 @@ CREATE TABLE `orders_purchase` (
 
 LOCK TABLES `orders_purchase` WRITE;
 /*!40000 ALTER TABLE `orders_purchase` DISABLE KEYS */;
-INSERT INTO `orders_purchase` VALUES (1,1,1,'Contado','LAPTOP LENOVO V14 IIL, INTEL CORE I3-1005G1, 4GB, 1TB, 14″ HD ( 1 ),  PC Todo en Uno Lenovo IdeaCentre 3, Intel Core i5-10400T 2.4GHz, RAM 8GB, HDD 1TB, Wi-FI, BT, LED 24 ( 3 )',11721.00,'2026-08-18 00:00:00','Aceptado','Boleta');
+INSERT INTO `orders_purchase` VALUES (1,1,1,'Contado','LAPTOP LENOVO V14 IIL, INTEL CORE I3-1005G1, 4GB, 1TB, 14″ HD ( 1 ),  PC Todo en Uno Lenovo IdeaCentre 3, Intel Core i5-10400T 2.4GHz, RAM 8GB, HDD 1TB, Wi-FI, BT, LED 24 ( 3 )',11721.00,9933.05,1787.95,'2026-08-18 00:00:00','Aceptado','Boleta',0,NULL,NULL,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `orders_purchase` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -312,7 +376,8 @@ CREATE TABLE `productos` (
   `desprd` text NOT NULL,
   `foto` varchar(255) NOT NULL,
   `precio` decimal(10,2) NOT NULL,
-  `stock` char(3) NOT NULL,
+  `precio_compra` decimal(10,2) NOT NULL DEFAULT 0.00 COMMENT 'Ultimo costo unitario sin IGV',
+  `stock` int(11) NOT NULL DEFAULT 0,
   `idmar` int(11) NOT NULL,
   `idcate` int(11) NOT NULL,
   `modelo` text NOT NULL,
@@ -320,6 +385,7 @@ CREATE TABLE `productos` (
   `state` tinyint(1) NOT NULL DEFAULT 1,
   `fere` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`idprod`),
+  UNIQUE KEY `uq_productos_codpro` (`codpro`),
   KEY `idmar` (`idmar`),
   KEY `idcate` (`idcate`),
   CONSTRAINT `productos_ibfk_1` FOREIGN KEY (`idmar`) REFERENCES `marca` (`idmar`),
@@ -333,7 +399,7 @@ CREATE TABLE `productos` (
 
 LOCK TABLES `productos` WRITE;
 /*!40000 ALTER TABLE `productos` DISABLE KEYS */;
-INSERT INTO `productos` VALUES (1,'33333333333333','LAPTOP LENOVO V14 IIL, INTEL CORE I3-1005G1, 4GB, 1TB, 14″ HD','Procesador: Intel Core i3\r\nTipo de disco duro: SATA\r\nTarjeta gráfica: Intel® UHD Graphics\r\nDisco Duro: 1TB\r\nMemoria RAM: 4GB','825226.jpg',2424.00,'99',1,2,'Lenovo','A partir de 1.6 Kg',1,'2026-09-15 03:17:45'),(2,'74355345345324',' PC Todo en Uno Lenovo IdeaCentre 3, Intel Core i5-10400T 2.4GHz, RAM 8GB, HDD 1TB, Wi-FI, BT, LED 24\" Full HD, Windows 10 Home SP','Intel® Core™ i5-10400T (2.0 / 3.6 GHz, 6 núcleos) Décima generación \r\nRAM 8 GB DDR4 ampliable\r\nDisco Duro de 1TB SATA\r\nPantalla 24\" Full HD (1920x1080) IPS, marcos reducidos.\r\nWiFi, Buetooth, Cámara web 720p\r\nTeclado & Mouse alámbricos\r\nWindows 10 Home SP','651402.jpg',3099.00,'20',1,4,'Lenovo','30kg',1,'2026-08-17 02:26:23'),(4,'96785756756756','LAPTOP HP ULTRA','ESTA ES UNA LAPTOP HP ULTRA','211473.jpg',2400.00,'90',2,2,'hP','100',1,'2026-09-15 03:35:05');
+INSERT INTO `productos` VALUES (1,'33333333333333','LAPTOP LENOVO V14 IIL, INTEL CORE I3-1005G1, 4GB, 1TB, 14″ HD','Procesador: Intel Core i3\r\nTipo de disco duro: SATA\r\nTarjeta gráfica: Intel® UHD Graphics\r\nDisco Duro: 1TB\r\nMemoria RAM: 4GB','825226.jpg',2424.00,0.00,99,1,2,'Lenovo','A partir de 1.6 Kg',1,'2026-09-15 03:17:45'),(2,'74355345345324',' PC Todo en Uno Lenovo IdeaCentre 3, Intel Core i5-10400T 2.4GHz, RAM 8GB, HDD 1TB, Wi-FI, BT, LED 24\" Full HD, Windows 10 Home SP','Intel® Core™ i5-10400T (2.0 / 3.6 GHz, 6 núcleos) Décima generación \r\nRAM 8 GB DDR4 ampliable\r\nDisco Duro de 1TB SATA\r\nPantalla 24\" Full HD (1920x1080) IPS, marcos reducidos.\r\nWiFi, Buetooth, Cámara web 720p\r\nTeclado & Mouse alámbricos\r\nWindows 10 Home SP','651402.jpg',3099.00,0.00,20,1,4,'Lenovo','30kg',1,'2026-08-17 02:26:23'),(4,'96785756756756','LAPTOP HP ULTRA','ESTA ES UNA LAPTOP HP ULTRA','211473.jpg',2400.00,0.00,90,2,2,'hP','100',1,'2026-09-15 03:35:05');
 /*!40000 ALTER TABLE `productos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -363,6 +429,34 @@ LOCK TABLES `proveedores` WRITE;
 /*!40000 ALTER TABLE `proveedores` DISABLE KEYS */;
 INSERT INTO `proveedores` VALUES (1,'20568005491','TIENDAS DE COMPUTO EIRL','',1,'2026-08-15 19:14:16'),(2,'20511697353','EQUIPOS Y ACCESORIOS DE COMPUTO S.A.C','',1,'2026-08-15 19:15:17'),(4,'10399333426','MANRIQUE SA','',1,'2026-08-19 08:58:35');
 /*!40000 ALTER TABLE `proveedores` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `series`
+--
+
+DROP TABLE IF EXISTS `series`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `series` (
+  `idserie` int(11) NOT NULL AUTO_INCREMENT,
+  `tipc` varchar(15) NOT NULL COMMENT 'Boleta o Factura',
+  `serie` char(4) NOT NULL,
+  `ultimo` int(10) unsigned NOT NULL DEFAULT 0 COMMENT 'ultimo numero emitido',
+  `state` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`idserie`),
+  UNIQUE KEY `uq_series` (`tipc`,`serie`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `series`
+--
+
+LOCK TABLES `series` WRITE;
+/*!40000 ALTER TABLE `series` DISABLE KEYS */;
+INSERT INTO `series` VALUES (1,'Boleta','B001',6,1),(2,'Factura','F001',0,1);
+/*!40000 ALTER TABLE `series` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --

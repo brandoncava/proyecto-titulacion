@@ -16,6 +16,15 @@ if (isset($_POST['update_qty'])) {
         return;
     }
 
+    $consulta = $connect->prepare('SELECT p.stock, p.nomprd FROM cart c INNER JOIN productos p ON c.idprod = p.idprod WHERE c.idv = ? AND c.user_id = ?');
+    $consulta->execute([$idv, (int)$_SESSION['id']]);
+    $producto = $consulta->fetch();
+
+    if ($producto && $quantity > (int)$producto->stock) {
+        avisar_y_redirigir('Stock insuficiente', 'Solo hay ' . (int)$producto->stock . ' unidades de "' . $producto->nomprd . '".', 'warning', '../ventas/cart.php');
+        return;
+    }
+
     // solo lineas del carrito propio
     $sql = $connect->prepare('UPDATE cart SET quantity = ? WHERE idv = ? AND user_id = ? LIMIT 1');
     $sql->execute([$quantity, $idv, (int)$_SESSION['id']]);

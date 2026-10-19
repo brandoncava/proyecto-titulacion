@@ -29,6 +29,14 @@ if (isset($_POST['add_prodct'])) {
         return;
     }
 
+    // el codigo no se puede repetir (ni con productos dados de baja)
+    $existe = $connect->prepare('SELECT 1 FROM productos WHERE codpro = ? LIMIT 1');
+    $existe->execute([$codpro]);
+    if ($existe->fetch()) {
+        avisar_y_redirigir('Error!', 'Ya existe un producto con ese código.', 'error', '../productos/nuevo.php');
+        return;
+    }
+
     if (!$idmar || !$idcate) {
         avisar_y_redirigir('Error!', 'Selecciona la marca y la categoría del producto.', 'error', '../productos/nuevo.php');
         return;
@@ -52,6 +60,10 @@ if (isset($_POST['add_prodct'])) {
             $codpro, $nomprd, $desprd, $foto ?? '', $precio, $stock,
             $idmar, $idcate, $modelo, $peso ?: 0,
         ]);
+
+        if ($stock > 0) {
+            registrar_movimiento($connect, $connect->lastInsertId(), (int)$_SESSION['id'], 'Ajuste', $stock);
+        }
 
         avisar_y_redirigir('Registrado!', 'Producto agregado correctamente.', 'success', '../productos/mostrar.php');
 

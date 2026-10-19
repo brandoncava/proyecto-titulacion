@@ -27,8 +27,8 @@ function password_predeterminada($rol)
 // ventas/compras/productos.../reportes: cada uno controla su seccion del menu
 $PERMISOS = [
     ROL_ADMINISTRADOR => [
-        'ventas', 'ventas_anular', 'compras', 'productos', 'productos_ed', 'productos_el',
-        'clientes', 'proveedores', 'catalogos', 'usuarios', 'reportes',
+        'ventas', 'ventas_anular', 'compras', 'compras_anular', 'productos', 'productos_ed', 'productos_el',
+        'clientes', 'proveedores', 'catalogos', 'usuarios', 'series', 'reportes',
     ],
     ROL_CAJERO => [
         'ventas', 'productos', 'clientes',

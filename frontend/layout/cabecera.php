@@ -22,6 +22,7 @@ $MENU = [
     'proveedores' => ['proveedores', 'proveedores/mostrar.php',      'la-user-friends',  'Proveedores'],
     'ventas'      => ['ventas',      'ventas/venta.php',             'la-money-bill',    'Ventas'],
     'compras'     => ['compras',     'compra/mostrar.php',           'la-store',         'Compras'],
+    'series'      => ['series',      'series/mostrar.php',           'la-file-invoice',  'Series'],
     'reportes'    => ['reportes',    'reportes/ventas.php',          'la-chart-bar',     'Reportes'],
 ];
 ?>

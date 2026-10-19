@@ -23,22 +23,23 @@ require __DIR__ . '/../layout/cabecera.php';
     <br>
   
     <label for="psw"><b>Tipo de documento</b></label><span class="badge-warning">*</span>
-    <select required name="tipcl">
-        <option>Seleccione</option>
-        <option value="dni">DNI</option>
+    <select required name="tipcl" id="tipcl">
+        <option value="">Seleccione</option>
+        <option value="DNI">DNI</option>
+        <option value="RUC">RUC (razón social)</option>
     </select>
 
     <label for="email"><b>Número del documento</b></label><span class="badge-warning">*</span>
-    <input type="text" maxlength="8" onKeypress="if (event.keyCode < 45 || event.keyCode > 57) event.returnValue = false;" placeholder="ejm: 77656756" name="numcl"  required>
+    <input type="text" maxlength="11" id="numcl" onKeypress="if (event.keyCode < 45 || event.keyCode > 57) event.returnValue = false;" placeholder="DNI (8 dígitos) o RUC (11 dígitos)" name="numcl"  required>
 
-    <label for="email"><b>Nombre del cliente</b></label><span class="badge-warning">*</span>
+    <label for="email"><b>Nombre del cliente o razón social</b></label><span class="badge-warning">*</span>
     <input type="text" placeholder="ejm: Alberto" name="nomcl"  required>
 
-    <label for="email"><b>Apellido del cliente</b></label><span class="badge-warning">*</span>
-    <input type="text" placeholder="ejm: Juarez" name="apecl"  required>
+    <label for="email"><b>Apellido del cliente (solo DNI)</b></label>
+    <input type="text" placeholder="ejm: Juarez" name="apecl" id="apecl">
 
-    <label for="email"><b>Teléfono celular del cliente</b></label><span class="badge-warning">*</span>
-    <input type="text" maxlength="9" onKeypress="if (event.keyCode < 45 || event.keyCode > 57) event.returnValue = false;" placeholder="ejm: 99898787" name="telcl"  required>
+    <label for="email"><b>Teléfono celular del cliente (opcional)</b></label>
+    <input type="text" maxlength="9" onKeypress="if (event.keyCode < 45 || event.keyCode > 57) event.returnValue = false;" placeholder="ejm: 99898787" name="telcl">
 
 
     <hr>
@@ -53,5 +54,15 @@ require __DIR__ . '/../layout/cabecera.php';
 <?php require __DIR__ . '/../layout/pie.php'; ?>
     <?php include_once '../../backend/php/add_customer.php' ?>
     <script type="text/javascript" src="../../backend/js/reenvio.js"></script>
+    <script type="text/javascript">
+    (function () {
+        var tipo = document.getElementById('tipcl'), num = document.getElementById('numcl'), ape = document.getElementById('apecl');
+        tipo.addEventListener('change', function () {
+            num.maxLength = (tipo.value === 'RUC') ? 11 : 8;
+            if (num.value.length > num.maxLength) { num.value = num.value.slice(0, num.maxLength); }
+            ape.required = (tipo.value === 'DNI');
+        });
+    })();
+    </script>
 </body>
 </html>

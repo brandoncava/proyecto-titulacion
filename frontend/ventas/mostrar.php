@@ -50,7 +50,8 @@ if($sentencia){
                                 <?php foreach($data as $d):?>
                                 <tr<?php if ((int)$d->anulada === 1) echo ' style="opacity:.5"'; ?>>
                                     <td><?php echo e($d->idord); ?></td>
-                                    <td><h4><?php echo e($d->tipc); ?></h4></td>
+                                    <td><h4><?php echo e($d->tipc); ?></h4>
+                                        <small><?php echo !empty($d->serie) ? e(formato_comprobante($d->serie, $d->numero)) : ''; ?></small></td>
                                     <td><h4><?php echo e($d->placed_on); ?></h4></td>
                                     <td><h4>S/<?php echo number_format($d->total_price, 2); ?></h4></td>
                                     <td>
@@ -58,6 +59,7 @@ if($sentencia){
                                            
                                             <div class="client-info">
                                                 <h4><?php echo e($d->nomcl); ?></h4>
+                                                <small><?php echo !empty($d->doc_num) ? e($d->doc_tipo . ' ' . $d->doc_num) : ''; ?></small>
                                                
                                             </div>
                                         </div>
@@ -65,7 +67,7 @@ if($sentencia){
                                     <td><h4><?php echo e($d->total_products); ?></h4></td>
         <td>
             
-            <a title="Boleta" href="../ventas/boleta.php?id=<?php echo e($d->idord); ?>" class="fa fa-file-text-o tooltip"></a>
+            <a title="<?php echo e($d->tipc); ?>" href="../ventas/boleta.php?id=<?php echo e($d->idord); ?>" class="fa fa-file-text-o tooltip"></a>
             <?php if ((int)$d->anulada === 1): ?>
                 <span style="color:#B42318;font-weight:bold;margin-left:6px;">ANULADA</span>
             <?php elseif (puede('ventas_anular')): ?>

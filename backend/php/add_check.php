@@ -9,15 +9,36 @@ if (isset($_POST['order'])) {
     csrf_validar();
 
     // el user_id sale de la sesion, no del form
-    $user_id = (int)$_SESSION['id'];
-    $nomcl = trim($_POST['nomcl'] ?? '');
-    $method = trim($_POST['cxtcre'] ?? '');
-    $tipc = trim($_POST['cxcom'] ?? '');
+    $user_id  = (int)$_SESSION['id'];
+    $method   = trim($_POST['cxtcre'] ?? '');
+    $doc_tipo = strtoupper(trim($_POST['doctipo'] ?? ''));          // '', DNI o RUC
+    $doc_num  = preg_replace('/\s+/', '', (string)($_POST['docnum'] ?? ''));
+    $nombre   = mb_substr(trim($_POST['nomcl'] ?? ''), 0, 150);
 
-    if ($nomcl === '' || !in_array($method, METODOS_PAGO, true) || !in_array($tipc, COMPROBANTES, true)) {
-        avisar_y_redirigir('Faltan datos', 'Indica el cliente, el comprobante y el método de pago.', 'warning', 'checkout.php');
+    if (!in_array($method, METODOS_PAGO, true)) {
+        avisar_y_redirigir('Faltan datos', 'Indica el método de pago.', 'warning', 'checkout.php');
         return;
     }
+
+    // el documento decide el comprobante: ruc = factura, dni o nada = boleta
+    if ($doc_tipo === '') {
+        $doc_num = '';
+    } elseif ($doc_tipo === 'DNI') {
+        if (!validar_dni($doc_num)) {
+            avisar_y_redirigir('DNI no válido', 'El DNI debe tener 8 dígitos.', 'warning', 'checkout.php');
+            return;
+        }
+    } elseif ($doc_tipo === 'RUC') {
+        if (!validar_ruc($doc_num)) {
+            avisar_y_redirigir('RUC no válido', 'Revisa el RUC: debe tener 11 dígitos y un dígito verificador correcto.', 'warning', 'checkout.php');
+            return;
+        }
+    } else {
+        avisar_y_redirigir('Documento no válido', 'Elige DNI, RUC o deja el documento vacío.', 'warning', 'checkout.php');
+        return;
+    }
+
+    $tipc = ($doc_tipo === 'RUC') ? 'Factura' : 'Boleta';
 
     try {
         $connect->beginTransaction();
@@ -57,17 +78,78 @@ if (isset($_POST['order'])) {
         $total = 0;
 
         foreach ($items as $item) {
-            $subtotal = $item['precio'] * $item['quantity'];
-            $total   += $subtotal;
+            $total += $item['precio'] * $item['quantity'];
             $resumen[] = $item['nomprd'] . ' ( ' . $item['quantity'] . ' )';
         }
 
+        // el precio ya incluye igv, se guarda base, igv y total
+        $total = round($total, 2);
+        list($base, $igv) = igv_desglosar($total);
+
+        // boleta de mas de S/ 700 pide el dni
+        if ($doc_tipo === '' && $total > LIMITE_BOLETA_SIN_DNI) {
+            $connect->rollBack();
+            avisar_y_redirigir(
+                'Falta el documento',
+                'El total supera S/ ' . number_format(LIMITE_BOLETA_SIN_DNI, 2) . '. Ingresa el DNI del cliente (o su RUC para factura).',
+                'warning',
+                'checkout.php'
+            );
+            return;
+        }
+
+        // cliente: se busca por documento, si no existe se registra
+        $idcli = null;
+        $nomcl = 'CLIENTES VARIOS';
+
+        if ($doc_tipo !== '') {
+            $buscar = $connect->prepare('SELECT idcli, nocl, apcl, state FROM clientes WHERE nudoc = ? LIMIT 1 FOR UPDATE');
+            $buscar->execute([$doc_num]);
+            $cliente = $buscar->fetch();
+
+            if ($cliente) {
+                $idcli = (int)$cliente->idcli;
+                $nomcl = trim($cliente->nocl . ' ' . $cliente->apcl);
+                if ((int)$cliente->state !== 1) {
+                    $connect->prepare('UPDATE clientes SET state = 1 WHERE idcli = ?')->execute([$idcli]);
+                }
+            } else {
+                if ($nombre === '') {
+                    $connect->rollBack();
+                    avisar_y_redirigir('Cliente nuevo', 'Ese documento no está registrado: escribe el nombre o la razón social del cliente.', 'warning', 'checkout.php');
+                    return;
+                }
+                $connect->prepare('INSERT INTO clientes (tipd, nudoc, nocl, apcl, telfcl, state) VALUES (?, ?, ?, ?, ?, 1)')
+                        ->execute([$doc_tipo, $doc_num, $nombre, '', '']);
+                $idcli = (int)$connect->lastInsertId();
+                $nomcl = $nombre;
+            }
+        }
+
+        // serie y numero del comprobante, la fila se bloquea para que no se repita
+        $buscarSerie = $connect->prepare('SELECT idserie, serie, ultimo FROM series WHERE tipc = ? AND state = 1 ORDER BY idserie LIMIT 1 FOR UPDATE');
+        $buscarSerie->execute([$tipc]);
+        $serieFila = $buscarSerie->fetch();
+
+        if (!$serieFila) {
+            $connect->rollBack();
+            avisar_y_redirigir('Sin serie', 'No hay una serie configurada para ' . $tipc . '.', 'error', 'checkout.php');
+            return;
+        }
+
+        $numero = (int)$serieFila->ultimo + 1;
+        $connect->prepare('UPDATE series SET ultimo = ? WHERE idserie = ?')->execute([$numero, $serieFila->idserie]);
+
         $insertar = $connect->prepare(
-            'INSERT INTO orders (user_id, nomcl, method, total_products, total_price, placed_on, payment_status, tipc)
-             VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)'
+            'INSERT INTO orders (user_id, idcli, nomcl, method, total_products, total_price, subtotal_sin_igv, igv,
+                                 placed_on, payment_status, tipc, idserie, serie, numero, doc_tipo, doc_num)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?)'
         );
         $insertar->execute([
-            $user_id, $nomcl, $method, implode(', ', $resumen), $total, 'Aceptado', $tipc
+            $user_id, $idcli, $nomcl, $method, implode(', ', $resumen), $total, $base, $igv,
+            'Aceptado', $tipc, $serieFila->idserie, $serieFila->serie, $numero,
+            $doc_tipo !== '' ? $doc_tipo : null,
+            $doc_tipo !== '' ? $doc_num : null,
         ]);
 
         $idord = (int)$connect->lastInsertId();
@@ -87,7 +169,7 @@ if (isset($_POST['order'])) {
                 $item['nomprd'],
                 $item['precio'],
                 $item['quantity'],
-                $item['precio'] * $item['quantity'],
+                round($item['precio'] * $item['quantity'], 2),
             ]);
 
             $descontar->execute([$item['quantity'], $item['idprod'], $item['quantity']]);
@@ -98,13 +180,20 @@ if (isset($_POST['order'])) {
                 avisar_y_redirigir('Stock insuficiente', 'El stock de "' . $item['nomprd'] . '" cambió mientras se procesaba la venta.', 'error', 'cart.php');
                 return;
             }
+
+            registrar_movimiento($connect, $item['idprod'], $user_id, 'Venta', -(int)$item['quantity'], $idord);
         }
 
         $connect->prepare('DELETE FROM cart WHERE user_id = ?')->execute([$user_id]);
 
         $connect->commit();
 
-        avisar_y_redirigir('Venta registrada', 'La venta se guardó y el stock quedó actualizado.', 'success', 'mostrar.php');
+        avisar_y_redirigir(
+            $tipc . ' registrada',
+            'Comprobante ' . formato_comprobante($serieFila->serie, $numero) . '. El stock quedó actualizado.',
+            'success',
+            'mostrar.php'
+        );
 
     } catch (PDOException $e) {
         if ($connect->inTransaction()) {

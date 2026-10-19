@@ -106,6 +106,8 @@ class ComprobanteCompra extends FPDF
         $etiquetas = [
             'N. Compra:'   => $this->datos_compra['idordpur'],
             'Comprobante:' => $this->datos_compra['tipc'],
+            'Doc. prov.:'  => $this->datos_compra['doc_prov'],
+            'F. emision:'  => $this->datos_compra['emision'],
             'Proveedor:'   => $this->datos_compra['proveedor'],
             'RUC prov.:'   => $this->datos_compra['rucprv'],
             'Fecha:'       => $this->datos_compra['fecha'],
@@ -144,6 +146,8 @@ $pdf->empresa_web       = $empresa_web;
 $pdf->datos_compra = [
     'idordpur'  => str_pad($row['idordpur'], 8, '0', STR_PAD_LEFT),
     'tipc'      => (string)$row['tipc'],
+    'doc_prov'  => !empty($row['serie_doc']) ? $row['serie_doc'] . '-' . $row['numero_doc'] : '-',
+    'emision'   => !empty($row['fecha_emision']) ? date('d/m/Y', strtotime($row['fecha_emision'])) : '-',
     'proveedor' => (string)$row['nomprv'],
     'rucprv'    => (string)$row['rucprv'],
     'fecha'     => (string)$row['placed_on'],
@@ -200,7 +204,22 @@ $pdf->Ln(6);
 /* Totales */
 $pdf->SetFont('Arial', 'B', 11);
 $pdf->SetFillColor(128, 128, 128);
-$pdf->SetX($margen + 180 - 80);
+$xTot = $margen + 180 - 80;
+
+// las compras nuevas guardan base e igv, las viejas se sacan del total
+$base = (float)($row['subtotal_sin_igv'] ?? 0);
+$igv  = (float)($row['igv'] ?? 0);
+if ($base <= 0) {
+    list($base, $igv) = igv_desglosar($row['total_price']);
+}
+
+$pdf->SetX($xTot);
+$pdf->Cell(50, 8, 'Subtotal (sin IGV):', 1, 0, 'C', true);
+$pdf->Cell(30, 8, 'S/ ' . number_format($base, 2), 1, 1, 'R');
+$pdf->SetX($xTot);
+$pdf->Cell(50, 8, $igv > 0 ? 'IGV (' . (IGV_TASA * 100) . '%):' : 'IGV (no incluye):', 1, 0, 'C', true);
+$pdf->Cell(30, 8, 'S/ ' . number_format($igv, 2), 1, 1, 'R');
+$pdf->SetX($xTot);
 $pdf->Cell(50, 9, 'Total:', 1, 0, 'C', true);
 $pdf->Cell(30, 9, 'S/ ' . number_format($row['total_price'], 2), 1, 1, 'R');
 

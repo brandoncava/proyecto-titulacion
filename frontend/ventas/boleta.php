@@ -65,7 +65,7 @@ class Boleta extends FPDF
     {
         // Titulo centrado
         $this->SetFont('Arial', 'B', 20);
-        $this->Cell(0, 12, utf8_decode('BOLETA ELECTRONICA'), 0, 1, 'C');
+        $this->Cell(0, 12, utf8_decode($this->datos_venta['titulo']), 0, 1, 'C');
         $this->Ln(4);
 
         $margen  = 15;
@@ -95,8 +95,9 @@ class Boleta extends FPDF
         $this->Cell(75, 7, 'Detalles', 0, 1);
 
         $etiquetas = [
-            'N. Boleta:' => $this->datos_venta['idord'],
+            $this->datos_venta['etiqueta_num'] => $this->datos_venta['numero'],
             'Cliente:'   => $this->datos_venta['cliente'],
+            $this->datos_venta['etiqueta_doc'] => $this->datos_venta['doc'],
             'Fecha:'     => $this->datos_venta['fecha'],
             'Pago:'      => $this->datos_venta['pago'],
             'Estado:'    => $this->datos_venta['estado'],
@@ -106,7 +107,7 @@ class Boleta extends FPDF
             $this->SetFont('Arial', 'B', 10);
             $this->Cell(25, 6, $label, 0, 0);
             $this->SetFont('Arial', '', 10);
-            $this->Cell(60, 6, utf8_decode($valor), 0, 1);
+            $this->Cell(60, 6, utf8_decode(mb_substr((string)$valor, 0, 34)), 0, 1);
         }
 
         /* Linea separadora */
@@ -119,9 +120,10 @@ class Boleta extends FPDF
 
     function Footer()
     {
-        $this->SetY(-15);
+        $this->SetY(-20);
         $this->SetFont('Arial', 'I', 8);
-        $this->Cell(0, 10, 'Pagina ' . $this->PageNo(), 0, 0, 'C');
+        $this->Cell(0, 5, utf8_decode('Representación impresa de la venta registrada en el sistema. La emisión electrónica válida ante SUNAT se realiza por los medios autorizados.'), 0, 1, 'C');
+        $this->Cell(0, 5, 'Pagina ' . $this->PageNo(), 0, 0, 'C');
     }
 }
 
@@ -130,8 +132,20 @@ $pdf->empresa_nombre    = $empresa_nombre;
 $pdf->empresa_direccion = $empresa_direccion;
 $pdf->empresa_ruc       = $empresa_ruc;
 $pdf->empresa_web       = $empresa_web;
+$esFactura = (($row['tipc'] ?? '') === 'Factura');
+$docTipo   = (string)($row['doc_tipo'] ?? '');
+$docNum    = (string)($row['doc_num'] ?? '');
+// las ventas viejas no tienen serie, se muestra el numero de venta
+$numeroComprobante = !empty($row['serie'])
+    ? formato_comprobante($row['serie'], $row['numero'])
+    : str_pad($row['idord'], 8, '0', STR_PAD_LEFT);
+
 $pdf->datos_venta = [
-    'idord'   => str_pad($row['idord'], 8, '0', STR_PAD_LEFT),
+    'titulo'       => $esFactura ? 'FACTURA' : 'BOLETA DE VENTA',
+    'etiqueta_num' => $esFactura ? 'N. Factura:' : 'N. Boleta:',
+    'numero'       => $numeroComprobante,
+    'etiqueta_doc' => ($docTipo !== '' ? $docTipo : 'Doc.') . ':',
+    'doc'          => $docNum !== '' ? $docNum : '-',
     'cliente' => $row['nomcl'],
     'fecha'   => $row['placed_on'],
     'pago'    => $row['method'],
@@ -177,8 +191,18 @@ foreach ($productos as $p) {
 $pdf->Ln(6);
 
 /* Totales */
+// el precio ya incluye igv, se saca del total
+list($opGravada, $igvMonto) = igv_desglosar($row['total_price']);
+$xTot = $margen + $anchoDesc + $anchoCant - 80;
+
 $pdf->SetFont('Arial', 'B', 11);
-$pdf->SetX($margen + $anchoDesc + $anchoCant - 80);
+$pdf->SetX($xTot);
+$pdf->Cell(50, 8, 'Op. gravada:', 1, 0, 'C', true);
+$pdf->Cell(30, 8, 'S/ ' . number_format($opGravada, 2), 1, 1, 'R');
+$pdf->SetX($xTot);
+$pdf->Cell(50, 8, 'IGV (' . (IGV_TASA * 100) . '%):', 1, 0, 'C', true);
+$pdf->Cell(30, 8, 'S/ ' . number_format($igvMonto, 2), 1, 1, 'R');
+$pdf->SetX($xTot);
 $pdf->Cell(50, 9, 'Total:', 1, 0, 'C', true);
 $pdf->Cell(30, 9, 'S/ ' . number_format($row['total_price'], 2), 1, 1, 'R');
 

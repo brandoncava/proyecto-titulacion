@@ -88,7 +88,7 @@ require __DIR__ . '/../layout/cabecera.php';
                     <div class="card">
                         <div class="card-head">
                              <?php 
-                                            $sql = "SELECT SUM(total_price) total FROM orders_purchase";
+                                            $sql = "SELECT SUM(total_price) total FROM orders_purchase WHERE anulada = 0";
                                             $result = $connect->query($sql); //$pdo sería el objeto conexión
                                             $total = $result->fetchColumn();
 

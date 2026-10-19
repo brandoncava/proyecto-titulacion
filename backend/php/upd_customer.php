@@ -15,8 +15,15 @@ if (isset($_POST['upd_customer'])) {
     $apcl   = trim($_POST['apecl'] ?? '');
     $telfcl = trim($_POST['telcl'] ?? '');
 
-    if (!$idcli || $tipd === '' || $nudoc === '' || $telfcl === '') {
-        avisar_y_redirigir('Error!', 'Completa el tipo y número de documento y el teléfono.', 'error', '../clientes/editar.php?id=' . (int)$idcli);
+    $tipd = strtoupper($tipd);
+
+    if (!$idcli || $tipd === '' || $nudoc === '') {
+        avisar_y_redirigir('Error!', 'Completa el tipo y número de documento.', 'error', '../clientes/editar.php?id=' . (int)$idcli);
+        return;
+    }
+
+    if (($tipd === 'DNI' && !validar_dni($nudoc)) || ($tipd === 'RUC' && !validar_ruc($nudoc)) || ($tipd !== 'DNI' && $tipd !== 'RUC')) {
+        avisar_y_redirigir('Error!', 'Documento no válido: DNI de 8 dígitos o RUC de 11 con dígito verificador correcto.', 'error', '../clientes/editar.php?id=' . (int)$idcli);
         return;
     }
 

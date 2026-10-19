@@ -17,6 +17,19 @@ if(isset($_POST['upd_prodct']))
     $idcate=trim($_POST['prdcate']);
     $modelo=trim($_POST['prdmod']);
     $peso=trim($_POST['prdpes']);
+
+    if ($codpro === '' || $nomprd === '' || !is_numeric($precio) || $precio < 0) {
+        avisar_y_redirigir('Error!', 'El código, el nombre y un precio válido son obligatorios.', 'error', '../productos/mostrar.php');
+        return;
+    }
+
+    // el codigo no se puede repetir en otro producto
+    $existe = $connect->prepare('SELECT 1 FROM productos WHERE codpro = ? AND idprod <> ? LIMIT 1');
+    $existe->execute([$codpro, $idprod]);
+    if ($existe->fetch()) {
+        avisar_y_redirigir('Error!', 'Ya existe otro producto con ese código.', 'error', '../productos/mostrar.php');
+        return;
+    }
    
     
     

@@ -16,7 +16,7 @@ Hecho en PHP + MySQL/MariaDB, sin frameworks. Genera boletas y comprobantes en P
 
 2. **Crea la base de datos.** En phpMyAdmin (`http://localhost/phpmyadmin`):
    - crea una base llamada `ckcomputers_db` con cotejamiento `utf8mb4_general_ci`
-   - selecciónala, ve a **Importar** y sube `database/ckcomputers_db.sql`
+   - selecciónala, ve a **Importar** y sube `database/ckcomputers_db_completo.sql` (incluye los cambios 05 a 10; `ckcomputers_db.sql` es la versión anterior y se actualiza con los scripts de `backend/sql` en orden)
 
 3. **Configura la conexión.** Copia `backend/config/config.example.php` como `backend/config/config.php` y ajusta los datos si tu MySQL no usa `root` sin contraseña:
 
@@ -65,3 +65,16 @@ ckcomputers_system/
 
 - `backend/config/config.php` no se sube al repositorio porque tiene las credenciales locales.
 - Las fotos que suben los usuarios se guardan en `backend/img/subidas/`. En el repositorio solo están las de los productos de ejemplo.
+
+## Cambios recientes (inventario, IGV y comprobantes)
+
+- Precio de compra separado del precio de venta: el costo se escribe en la compra, sin IGV (como la factura del proveedor); `productos.precio` es el precio de venta e incluye IGV (18%).
+- La venta pide el documento del cliente: RUC genera factura (serie F001); DNI o sin documento genera boleta (serie B001). Con boleta mayor a S/ 700 el DNI es obligatorio.
+- Serie y correlativo en la tabla `series`; la boleta o factura en PDF muestra serie-número, documento del cliente y el desglose del IGV.
+- En compras se registra el comprobante como Factura (por defecto) o Boleta, y se indica si el comprobante del proveedor incluye IGV o no.
+- Control de stock: la venta no deja agregar más unidades de las que hay (el listado muestra el stock y "Sin stock"), y al confirmar se vuelve a validar y se descuenta.
+- No incluye la emisión electrónica válida ante SUNAT: el PDF es la representación impresa de la venta registrada.
+- Kardex: cada compra, venta, anulación y ajuste de stock se anota en `movimientos_inventario`; la venta queda enlazada con su serie (`orders.idserie`).
+- Scripts nuevos: `backend/sql/05` a `10` (ejecutar en ese orden sobre una base anterior).
+- Las compras se pueden anular (solo el administrador): se descuenta el stock y queda en el kardex. Se registra la serie, número y fecha del comprobante del proveedor y no se permite repetirlo.
+- Módulo de series (administrador) para activar series de boleta y factura (solo una activa por comprobante); reporte de compras; el código de producto es único y el stock se valida como número.

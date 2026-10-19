@@ -3,7 +3,66 @@
 
 // opciones validas de los formularios de pago (ventas/compras checkout.php)
 const METODOS_PAGO = ['Contado', 'Tarjeta'];
-const COMPROBANTES = ['Boleta'];
+// comprobantes de venta (ruc = factura, dni o sin dato = boleta)
+const COMPROBANTES = ['Boleta', 'Factura'];
+// boleta por mas de este monto pide el dni del comprador
+const LIMITE_BOLETA_SIN_DNI = 700.00;
+// comprobantes que entrega el proveedor en las compras
+const COMPROBANTES_COMPRA = ['Factura', 'Boleta'];
+
+// igv: el precio de venta lo incluye, el costo de compra va sin igv
+const IGV_TASA = 0.18;
+
+// del total con igv saca [base, igv]
+function igv_desglosar($total)
+{
+    $total = round((float)$total, 2);
+    $base  = round($total / (1 + IGV_TASA), 2);
+    return [$base, round($total - $base, 2)];
+}
+
+// de la base sin igv saca [base, igv, total]
+function igv_agregar($base)
+{
+    $base = round((float)$base, 2);
+    $igv  = round($base * IGV_TASA, 2);
+    return [$base, $igv, round($base + $igv, 2)];
+}
+
+function validar_dni($numero)
+{
+    return (bool)preg_match('/^\d{8}$/', (string)$numero);
+}
+
+// ruc: 11 digitos, prefijo valido y digito verificador
+function validar_ruc($numero)
+{
+    $numero = (string)$numero;
+    if (!preg_match('/^\d{11}$/', $numero)) {
+        return false;
+    }
+    if (!in_array(substr($numero, 0, 2), ['10', '15', '16', '17', '20'], true)) {
+        return false;
+    }
+    $pesos = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2];
+    $suma = 0;
+    for ($i = 0; $i < 10; $i++) {
+        $suma += (int)$numero[$i] * $pesos[$i];
+    }
+    $dv = 11 - ($suma % 11);
+    if ($dv === 10) {
+        $dv = 0;
+    } elseif ($dv === 11) {
+        $dv = 1;
+    }
+    return $dv === (int)$numero[10];
+}
+
+// ej: B001-00000001
+function formato_comprobante($serie, $numero)
+{
+    return $serie . '-' . str_pad((string)$numero, 8, '0', STR_PAD_LEFT);
+}
 
 function e($valor)
 {
@@ -89,4 +148,17 @@ function guardar_imagen_producto($campo, &$error)
     }
 
     return $nombre;
+}
+
+// anota un movimiento en el kardex; se llama justo despues de cambiar el stock, dentro de la misma transaccion
+// cantidad: positiva si entra stock, negativa si sale
+function registrar_movimiento($connect, $idprod, $user_id, $tipo, $cantidad, $idord = null, $idordpur = null)
+{
+    $stock = $connect->prepare('SELECT stock FROM productos WHERE idprod = ?');
+    $stock->execute([$idprod]);
+
+    $connect->prepare(
+        'INSERT INTO movimientos_inventario (idprod, user_id, tipo, cantidad, stock_resultante, idord, idordpur, fecha)
+         VALUES (?, ?, ?, ?, ?, ?, ?, NOW())'
+    )->execute([$idprod, $user_id, $tipo, $cantidad, (int)$stock->fetchColumn(), $idord, $idordpur]);
 }

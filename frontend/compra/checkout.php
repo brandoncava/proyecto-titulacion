@@ -21,10 +21,10 @@ require __DIR__ . '/../layout/cabecera.php';
       $select_cart_items->execute([$user_id]);
       if($select_cart_items->rowCount() > 0){
          while($fetch_cart_items = $select_cart_items->fetch(PDO::FETCH_ASSOC)){
-            $cart_total_price = ($fetch_cart_items['precio'] * $fetch_cart_items['quantity']);
+            $cart_total_price = ($fetch_cart_items['price'] * $fetch_cart_items['quantity']);
             $cart_grand_total += $cart_total_price;
    ?>
-   <p> <?php echo e($fetch_cart_items['name']); ?> <span>(<?= 'S/'.$fetch_cart_items['precio'].'/- x '. $fetch_cart_items['quantity']; ?>)</span> </p>
+   <p> <?php echo e($fetch_cart_items['name']); ?> <span>(<?= 'S/'.$fetch_cart_items['price'].' (sin IGV) x '. $fetch_cart_items['quantity']; ?>)</span> </p>
    <?php
     }
    }else{
@@ -32,7 +32,10 @@ require __DIR__ . '/../layout/cabecera.php';
 
    }
    ?>
-   <div class="grand-total">Precio Total : <span>S/<?php echo number_format($cart_grand_total, 2); ?></span></div>
+   <?php list($c_base, $c_igv, $c_total) = igv_agregar($cart_grand_total); ?>
+   <div class="grand-total">Subtotal (sin IGV) : <span>S/<?php echo number_format($c_base, 2); ?></span></div>
+   <div class="grand-total">IGV (<?php echo IGV_TASA * 100; ?>%) : <span id="igv-monto">S/<?php echo number_format($c_igv, 2); ?></span></div>
+   <div class="grand-total">Total : <span id="total-monto">S/<?php echo number_format($c_total, 2); ?></span></div>
    
  </div>  
 
@@ -58,9 +61,23 @@ require __DIR__ . '/../layout/cabecera.php';
    <label for="psw"><b>Comprobante de pago</b></label><span class="badge-warning">*</span>
     <select required name="cxcom" id="cxcom">
         <option value="">Seleccione</option>
+        <option value="Factura">Factura</option>
         <option value="Boleta">Boleta</option>
        
     </select>
+
+    <label for="cxigv"><b>El comprobante del proveedor</b></label><span class="badge-warning">*</span>
+    <select required name="cxigv" id="cxigv">
+        <option value="1">Incluye IGV</option>
+        <option value="0">No incluye IGV</option>
+    </select>
+
+    <label for="serie_doc"><b>Serie y número del comprobante</b></label><span class="badge-warning">*</span>
+    <input type="text" name="serie_doc" id="serie_doc" maxlength="4" placeholder="Serie ejm: F001" style="text-transform:uppercase;" required>
+    <input type="text" name="numero_doc" id="numero_doc" maxlength="8" onKeypress="if (event.keyCode < 48 || event.keyCode > 57) event.returnValue = false;" placeholder="Número ejm: 00001234" required>
+
+    <label for="fecha_emision"><b>Fecha de emisión del comprobante</b></label><span class="badge-warning">*</span>
+    <input type="date" name="fecha_emision" id="fecha_emision" max="<?php echo date('Y-m-d'); ?>" required>
 
     <label for="psw"><b>Método de pago</b></label><span class="badge-warning">*</span>
         <select required name="cxtcre" id="cxtcre">
@@ -85,5 +102,24 @@ require __DIR__ . '/../layout/cabecera.php';
 ?>
     <script type="text/javascript" src="../../backend/js/reenvio.js"></script>
     <script type="text/javascript" src="../../backend/js/provee.js"></script>
+    <script type="text/javascript">
+    (function () {
+        var igv = document.getElementById('cxigv');
+        var montoIgv = document.getElementById('igv-monto');
+        var montoTotal = document.getElementById('total-monto');
+        var conIgv = [montoIgv.textContent, montoTotal.textContent];
+        var base = <?php echo json_encode('S/' . number_format($c_base, 2)); ?>;
+
+        igv.addEventListener('change', function () {
+            if (igv.value === '1') {
+                montoIgv.textContent = conIgv[0];
+                montoTotal.textContent = conIgv[1];
+            } else {
+                montoIgv.textContent = 'S/0.00';
+                montoTotal.textContent = base;
+            }
+        });
+    })();
+    </script>
 </body>
 </html>

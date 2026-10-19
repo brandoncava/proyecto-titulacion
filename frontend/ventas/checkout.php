@@ -32,7 +32,10 @@ require __DIR__ . '/../layout/cabecera.php';
 
    }
    ?>
-   <div class="grand-total">Precio Total : <span>S/<?php echo number_format($cart_grand_total, 2); ?></span></div>
+   <?php list($c_base, $c_igv) = igv_desglosar($cart_grand_total); ?>
+   <div class="grand-total">Op. gravada : <span>S/<?php echo number_format($c_base, 2); ?></span></div>
+   <div class="grand-total">IGV (<?php echo IGV_TASA * 100; ?>%) : <span>S/<?php echo number_format($c_igv, 2); ?></span></div>
+   <div class="grand-total">Total (incluye IGV) : <span>S/<?php echo number_format($cart_grand_total, 2); ?></span></div>
    
  </div>  
 
@@ -48,15 +51,19 @@ require __DIR__ . '/../layout/cabecera.php';
     <hr>
     <br>
   
-    <label for="email"><b>Nombres y apellidos del cliente</b></label><span class="badge-warning">*</span>
-    <input type="text"  name="nomcl" placeholder="ejm: Fausto Jesus Yovera Yamunaque" required>
-
-   <label for="psw"><b>Comprobante de pago</b></label><span class="badge-warning">*</span>
-    <select required name="cxcom" id="cxcom">
-        <option value="">Seleccione</option>
-        <option value="Boleta">Boleta</option>
-       
+    <label for="doctipo"><b>Documento del cliente</b></label>
+    <select name="doctipo" id="doctipo">
+        <option value="">Sin documento (solo boleta de hasta S/ 700)</option>
+        <option value="DNI">DNI &rarr; Boleta</option>
+        <option value="RUC">RUC &rarr; Factura</option>
     </select>
+
+    <input type="text" name="docnum" id="docnum" inputmode="numeric" maxlength="11" placeholder="Número de documento" disabled>
+
+    <label for="nomcl"><b>Nombre o razón social del cliente</b></label>
+    <input type="text" name="nomcl" id="nomcl" maxlength="150" placeholder="Solo si el cliente es nuevo; si ya existe se usa el registrado">
+
+    <p id="aviso-comprobante" style="margin:10px 0;font-size:15px;">Se emitirá: <b id="tipo-emitido">Boleta</b></p>
 
     <label for="psw"><b>Método de pago</b></label><span class="badge-warning">*</span>
         <select required name="cxtcre" id="cxtcre">
@@ -80,5 +87,39 @@ require __DIR__ . '/../layout/cabecera.php';
     include_once '../../backend/php/add_check.php'
 ?>
     <script type="text/javascript" src="../../backend/js/reenvio.js"></script>
+    <script type="text/javascript">
+    (function () {
+        var total = <?php echo json_encode(round((float)$cart_grand_total, 2)); ?>;
+        var limite = <?php echo json_encode(LIMITE_BOLETA_SIN_DNI); ?>;
+        var tipo = document.getElementById('doctipo');
+        var num = document.getElementById('docnum');
+        var nom = document.getElementById('nomcl');
+        var emitido = document.getElementById('tipo-emitido');
+        var aviso = document.getElementById('aviso-comprobante');
+
+        function actualizar() {
+            var t = tipo.value;
+            num.disabled = (t === '');
+            num.required = (t !== '');
+            if (t === '') { num.value = ''; }
+            num.maxLength = (t === 'RUC') ? 11 : 8;
+            num.placeholder = (t === 'RUC') ? 'RUC (11 dígitos)' : (t === 'DNI' ? 'DNI (8 dígitos)' : 'Número de documento');
+            if (num.value.length > num.maxLength) { num.value = num.value.slice(0, num.maxLength); }
+            emitido.textContent = (t === 'RUC') ? 'Factura' : 'Boleta';
+            var falta = (t === '' && total > limite);
+            aviso.style.color = falta ? '#B42318' : '';
+            if (falta) {
+                aviso.innerHTML = 'El total supera S/ ' + limite.toFixed(2) + ': ingresa el <b>DNI</b> del cliente (o su <b>RUC</b> para factura).';
+            } else {
+                aviso.innerHTML = 'Se emitirá: <b id="tipo-emitido">' + emitido.textContent + '</b>';
+                emitido = document.getElementById('tipo-emitido');
+            }
+        }
+
+        num.addEventListener('input', function () { num.value = num.value.replace(/\D/g, ''); });
+        tipo.addEventListener('change', actualizar);
+        actualizar();
+    })();
+    </script>
 </body>
 </html>

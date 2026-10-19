@@ -22,7 +22,7 @@ require __DIR__ . '/../layout/cabecera.php';
                     <div>
                         <?php 
 require '../../backend/config/Conexion.php';
-$sentencia = $connect->prepare("SELECT orders_purchase.idordpur, orders_purchase.user_id, proveedores.idprov, proveedores.rucprv, proveedores.nomprv, orders_purchase.total_products, orders_purchase.total_price, orders_purchase.placed_on, orders_purchase.payment_status, orders_purchase.tipc FROM orders_purchase INNER JOIN proveedores ON orders_purchase.idprov = proveedores.idprov ORDER BY idordpur DESC;");
+$sentencia = $connect->prepare("SELECT orders_purchase.idordpur, orders_purchase.user_id, proveedores.idprov, proveedores.rucprv, proveedores.nomprv, orders_purchase.total_products, orders_purchase.total_price, orders_purchase.placed_on, orders_purchase.payment_status, orders_purchase.tipc, orders_purchase.serie_doc, orders_purchase.numero_doc, orders_purchase.anulada FROM orders_purchase INNER JOIN proveedores ON orders_purchase.idprov = proveedores.idprov ORDER BY idordpur DESC;");
  $sentencia->execute();
 $data =  array();
 if($sentencia){
@@ -50,7 +50,8 @@ if($sentencia){
                                 <?php foreach($data as $d):?>
                                 <tr>
                                     <td><?php echo e($d->idordpur); ?></td>
-                                    <td><h4><?php echo e($d->tipc); ?></h4></td>
+                                    <td><h4><?php echo e($d->tipc); ?></h4>
+                                        <small><?php echo !empty($d->serie_doc) ? e($d->serie_doc . '-' . $d->numero_doc) : ''; ?></small></td>
                                     <td><h4><?php echo e($d->placed_on); ?></h4></td>
                                     <td><h4>S/<?php echo number_format($d->total_price, 2); ?></h4></td>
                                     <td>
@@ -66,6 +67,16 @@ if($sentencia){
         <td>
             
             <a title="Comprobante" href="comprobante.php?id=<?php echo e($d->idordpur); ?>" class="fa fa-file-text-o tooltip"></a>
+            <?php if ((int)$d->anulada === 1): ?>
+                <span style="color:#B42318;font-weight:bold;margin-left:6px;">ANULADA</span>
+            <?php elseif (puede('compras_anular')): ?>
+                <form method="POST" action="" style="display:inline" onsubmit="return anularCompra(this);">
+                    <?php echo csrf_campo(); ?>
+                    <input type="hidden" name="idordpur" value="<?php echo e($d->idordpur); ?>">
+                    <input type="hidden" name="motivo" value="">
+                    <button type="submit" name="anular_compra" title="Anular compra" class="fa fa-ban" style="border:none;background:#B42318;color:#fff;cursor:pointer;padding:6px 9px;border-radius:4px;margin-left:6px;"></button>
+                </form>
+            <?php endif; ?>
         </td>
                     
                                    
@@ -89,5 +100,16 @@ if($sentencia){
             </div>
             
 <?php require __DIR__ . '/../layout/pie.php'; ?>
+<script type="text/javascript">
+function anularCompra(form){
+    var motivo = prompt('Motivo de la anulación de esta compra:');
+    if (motivo === null) return false;            // canceló
+    motivo = motivo.trim();
+    if (motivo === '') { alert('Debes indicar un motivo.'); return false; }
+    form.motivo.value = motivo;
+    return confirm('¿Anular esta compra? Se descontará el stock del inventario y no se puede deshacer.');
+}
+</script>
+<?php include_once '../../backend/php/anular_compra.php'; ?>
 </body>
 </html>

@@ -43,7 +43,7 @@ if($sentencia){
     <input disabled type="text" value="<?php echo e($d->nomprd); ?>" placeholder="ejm: Laptop Lenovo"   required>
 
     <label for="email"><b>Stock del producto</b></label><span class="badge-warning">*</span>
-    <input type="text" maxlength="3" onKeypress="if (event.keyCode < 45 || event.keyCode > 57) event.returnValue = false;" value="<?php echo e($d->stock); ?>" placeholder="ejm: Lenovo" name="prdstock"  required>
+    <input type="text" maxlength="5" onKeypress="if (event.keyCode < 45 || event.keyCode > 57) event.returnValue = false;" value="<?php echo e($d->stock); ?>" placeholder="ejm: Lenovo" name="prdstock"  required>
 
   
     </div>

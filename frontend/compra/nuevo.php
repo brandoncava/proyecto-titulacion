@@ -17,7 +17,7 @@ require __DIR__ . '/../layout/cabecera.php';
                     <div>
                         <?php 
 require '../../backend/config/Conexion.php';
-$sentencia = $connect->prepare("SELECT productos.idprod,productos.codpro ,productos.nomprd, productos.desprd, productos.foto, productos.precio, productos.stock, marca.idmar, marca.nomarc, categoria.idcate, categoria.nocate,productos.modelo, productos.peso, productos.state, productos.fere FROM productos INNER JOIN marca ON productos.idmar = marca.idmar INNER JOIN categoria ON productos.idcate = categoria.idcate ORDER BY productos.idprod DESC;");
+$sentencia = $connect->prepare("SELECT productos.idprod,productos.codpro ,productos.nomprd, productos.desprd, productos.foto, productos.precio, productos.precio_compra, productos.stock, marca.idmar, marca.nomarc, categoria.idcate, categoria.nocate,productos.modelo, productos.peso, productos.state, productos.fere FROM productos INNER JOIN marca ON productos.idmar = marca.idmar INNER JOIN categoria ON productos.idcate = categoria.idcate WHERE productos.state = 1 ORDER BY productos.idprod DESC;");
  $sentencia->execute();
 $data =  array();
 if($sentencia){
@@ -34,7 +34,8 @@ if($sentencia){
                                     <th><span class="las la-sort"></span>Foto</th>
                                     <th><span class="las la-sort"></span>Código</th>
                                     <th><span class="las la-sort"></span>Producto</th>
-                                    <th><span class="las la-sort"></span>Precio</th>
+                                    <th><span class="las la-sort"></span>Precio venta (con IGV)</th>
+                                    <th><span class="las la-sort"></span>Último costo (sin IGV)</th>
                                     <th><span class="las la-sort"></span></th>
                                  
                                 </tr>
@@ -46,14 +47,18 @@ if($sentencia){
                                     <td><h4><?php echo e($d->codpro); ?></h4></td>
                                     <td><h4><?php echo e($d->nomprd); ?></h4></td>
                                    <td><h4>S/<?php echo number_format($d->precio,2) ?></h4></td>
+                                   <td><h4><?php echo $d->precio_compra > 0 ? 'S/' . number_format($d->precio_compra,2) : '-'; ?></h4></td>
 
-                                   <td style="width:260px;">
+                                   <td style="width:460px;">
                                      <form class="form-inline" method="post" action="">
 <?php echo csrf_campo(); ?>
     <input type="hidden" name="prdt" value="<?php echo e($d->idprod); ?>">
    
       <div class="form-group">
         <input type="number" name="p_qty" value="1" style="width:100px;" min="1" class="form-control" placeholder="Cantidad">
+      </div>
+      <div class="form-group">
+        <input type="number" name="p_cost" step="0.01" min="0.01" required value="<?php echo $d->precio_compra > 0 ? e(number_format($d->precio_compra, 2, '.', '')) : ''; ?>" style="width:120px;" class="form-control" placeholder="Costo s/IGV">
       </div>
       <button type="submit" name="add_to_cart_purchase" class="registerbtn">ADD </button>
     </form>   

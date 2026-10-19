@@ -31,6 +31,7 @@ $enRango = 'o.placed_on >= :desde AND o.placed_on < :hasta';
 $resumen = $connect->prepare(
     "SELECT SUM(o.anulada = 0)                                   AS ventas,
             COALESCE(SUM(CASE WHEN o.anulada = 0 THEN o.total_price END), 0) AS total,
+            COALESCE(SUM(CASE WHEN o.anulada = 0 THEN o.igv END), 0) AS igv,
             SUM(o.anulada = 1)                                   AS anuladas,
             COALESCE(SUM(CASE WHEN o.anulada = 1 THEN o.total_price END), 0) AS total_anulado
        FROM orders o
@@ -52,7 +53,7 @@ $pagos = $porPago->fetchAll();
 
 $filtroEstado = ['validas' => ' AND o.anulada = 0', 'anuladas' => ' AND o.anulada = 1', 'todas' => ''][$estado];
 $lista = $connect->prepare(
-    "SELECT o.idord, o.placed_on, o.tipc, o.nomcl, o.method, o.total_price, o.anulada, o.motivo_anulacion,
+    "SELECT o.idord, o.placed_on, o.tipc, o.serie, o.numero, o.nomcl, o.method, o.igv, o.total_price, o.anulada, o.motivo_anulacion,
             u.nombre AS vendedor
        FROM orders o
        LEFT JOIN usuarios u ON u.id = o.user_id
@@ -88,6 +89,7 @@ require __DIR__ . '/../layout/cabecera.php';
                     </label>
                     <button type="submit">Filtrar</button>
                     <span class="atajos">
+                        <a href="compras.php">Reporte de compras</a>
 <?php foreach ($atajos as $texto => [$d, $h]): ?>
                         <a href="?desde=<?php echo $d; ?>&amp;hasta=<?php echo $h; ?>&amp;estado=<?php echo $estado; ?>"><?php echo $texto; ?></a>
 <?php endforeach; ?>
@@ -107,7 +109,14 @@ require __DIR__ . '/../layout/cabecera.php';
                             <h2>S/<?php echo number_format($r->total, 2); ?></h2>
                             <span class="las la-money-bill"></span>
                         </div>
-                        <div class="card-progress"><small>Total vendido</small></div>
+                        <div class="card-progress"><small>Total vendido (con IGV)</small></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-head">
+                            <h2>S/<?php echo number_format($r->igv, 2); ?></h2>
+                            <span class="las la-percent"></span>
+                        </div>
+                        <div class="card-progress"><small>IGV de las ventas</small></div>
                     </div>
                     <div class="card">
                         <div class="card-head">
@@ -160,9 +169,10 @@ require __DIR__ . '/../layout/cabecera.php';
                                     <th><span class="las la-sort"></span>Cliente</th>
                                     <th><span class="las la-sort"></span>Vendedor</th>
                                     <th><span class="las la-sort"></span>Pago</th>
+                                    <th><span class="las la-sort"></span>IGV</th>
                                     <th><span class="las la-sort"></span>Total</th>
                                     <th><span class="las la-sort"></span>Estado</th>
-                                    <th>Boleta</th>
+                                    <th>Comprobante</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -170,10 +180,11 @@ require __DIR__ . '/../layout/cabecera.php';
                                 <tr>
                                     <td><?php echo e($v->idord); ?></td>
                                     <td data-order="<?php echo e($v->placed_on); ?>"><?php echo date('d/m/Y H:i', strtotime($v->placed_on)); ?></td>
-                                    <td><?php echo e($v->tipc); ?></td>
+                                    <td><?php echo e($v->tipc); ?><?php echo !empty($v->serie) ? ' ' . e(formato_comprobante($v->serie, $v->numero)) : ''; ?></td>
                                     <td><?php echo e($v->nomcl); ?></td>
                                     <td><?php echo e($v->vendedor ?? '—'); ?></td>
                                     <td><?php echo e($v->method); ?></td>
+                                    <td>S/<?php echo number_format($v->igv, 2); ?></td>
                                     <td data-order="<?php echo e($v->total_price); ?>">S/<?php echo number_format($v->total_price, 2); ?></td>
 <?php if ((int)$v->anulada === 1): ?>
                                     <td><span class="estado-anulada" title="<?php echo e($v->motivo_anulacion); ?>">ANULADA</span></td>

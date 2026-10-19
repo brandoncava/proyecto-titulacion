@@ -8,10 +8,20 @@ if(isset($_POST['upd_prodct_stock']))
 
     csrf_validar();
 
-    $idprod=trim($_POST['prdid']);
-    $stock=trim($_POST['prdstock']);
+    $idprod = filter_input(INPUT_POST, 'prdid', FILTER_VALIDATE_INT);
+    $stock  = filter_input(INPUT_POST, 'prdstock', FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+
+    if (!$idprod || $stock === false || $stock === null) {
+        avisar_y_redirigir('Error!', 'Indica un stock válido (0 o más).', 'error', '../productos/mostrar.php');
+        return;
+    }
     
     try {
+
+        // stock anterior, para anotar la diferencia en el kardex
+        $anterior = $connect->prepare('SELECT stock FROM productos WHERE idprod = ?');
+        $anterior->execute([$idprod]);
+        $stock_anterior = (int)$anterior->fetchColumn();
 
         $query = "UPDATE productos SET stock=:stock WHERE idprod=:idprod LIMIT 1";
         $statement = $connect->prepare($query);
@@ -24,6 +34,10 @@ if(isset($_POST['upd_prodct_stock']))
 
         if($query_execute)
         {
+            if ((int)$stock !== $stock_anterior) {
+                registrar_movimiento($connect, $idprod, (int)$_SESSION['id'], 'Ajuste', (int)$stock - $stock_anterior);
+            }
+
             echo '<script type="text/javascript">
 swal("Actualizado!", "Se actualizó correctamente", "success").then(function() {
             window.location = "../productos/mostrar.php";

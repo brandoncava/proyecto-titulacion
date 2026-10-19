@@ -49,6 +49,7 @@ if (isset($_POST['anular_venta'])) {
         $devolver = $connect->prepare('UPDATE productos SET stock = stock + ? WHERE idprod = ?');
         foreach ($lineas as $linea) {
             $devolver->execute([(int)$linea['cantidad'], (int)$linea['idprod']]);
+            registrar_movimiento($connect, (int)$linea['idprod'], (int)$_SESSION['id'], 'Anulacion', (int)$linea['cantidad'], $idord);
         }
 
         $anular = $connect->prepare(

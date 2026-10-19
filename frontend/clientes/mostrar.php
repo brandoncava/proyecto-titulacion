@@ -50,7 +50,7 @@ if($sentencia){
                                            
                                             <div class="client-info">
                                                 <h4><?php echo e($d->nocl); ?>&nbsp;<?php echo e($d->apcl); ?></h4>
-                                                <small><?php echo e($d->nudoc); ?></small>
+                                                <small><?php echo e(strtoupper($d->tipd) . ' ' . $d->nudoc); ?></small>
                                             </div>
                                         </div>
                                     </td>

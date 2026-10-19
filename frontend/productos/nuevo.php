@@ -35,7 +35,7 @@ require __DIR__ . '/../layout/cabecera.php';
     <input type="text" onKeypress="if (event.keyCode < 45 || event.keyCode > 57) event.returnValue = false;"  placeholder="ejm: 299" name="prdprec"  required>
 
     <label for="email"><b>Stock del producto</b></label><span class="badge-warning">*</span>
-    <input type="text" maxlength="3" onKeypress="if (event.keyCode < 45 || event.keyCode > 57) event.returnValue = false;"  placeholder="ejm: 999" name="prdstco"  required>
+    <input type="text" maxlength="5" onKeypress="if (event.keyCode < 45 || event.keyCode > 57) event.returnValue = false;"  placeholder="ejm: 999" name="prdstco"  required>
 
     <label for="psw"><b>Marca del producto</b></label><span class="badge-warning">*</span>
         <div class="botons-modals">
