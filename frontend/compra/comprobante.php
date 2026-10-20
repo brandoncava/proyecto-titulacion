@@ -9,7 +9,6 @@ requiere_permiso("compras");
 $empresa_nombre = 'CK Computers';
 $empresa_direccion = ['Trujillo', 'Stand A 109, ORO AZUL'];
 $empresa_ruc = 'RUC: 10469119667';
-$empresa_web = 'ventapro.pe/c/ck-computers';
 
 /* ID de la compra a imprimir */
 $id = filter_input(INPUT_GET, "id", FILTER_VALIDATE_INT) ?: 0;
@@ -67,7 +66,6 @@ class ComprobanteCompra extends FPDF
     public $empresa_nombre;
     public $empresa_direccion = [];
     public $empresa_ruc;
-    public $empresa_web;
     public $datos_compra = [];
 
     function Header()
@@ -92,8 +90,6 @@ class ComprobanteCompra extends FPDF
         }
         $this->SetX($margen);
         $this->Cell(90, 6, utf8_decode($this->empresa_ruc), 0, 1);
-        $this->SetX($margen);
-        $this->Cell(90, 6, utf8_decode($this->empresa_web), 0, 1);
 
         $leftEndY = $this->GetY();
 
@@ -142,7 +138,6 @@ $pdf = new ComprobanteCompra('P', 'mm', 'A4');
 $pdf->empresa_nombre    = $empresa_nombre;
 $pdf->empresa_direccion = $empresa_direccion;
 $pdf->empresa_ruc       = $empresa_ruc;
-$pdf->empresa_web       = $empresa_web;
 $pdf->datos_compra = [
     'idordpur'  => str_pad($row['idordpur'], 8, '0', STR_PAD_LEFT),
     'tipc'      => (string)$row['tipc'],

@@ -5,7 +5,7 @@ require_once __DIR__ . '/../../backend/config/auth.php';
 requiere_permiso('ventas');
 
 $seccion = 'ventas';
-$migas = 'Ventas dentro del sistema';
+$migas = 'Ventas';
 $tablas = true;
 require __DIR__ . '/../layout/cabecera.php';
 ?>

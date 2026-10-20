@@ -1,5 +1,5 @@
 <?php
-// botones de cada venta en los listados (mostrar.php y venta.php); usa $d = fila de orders
+// botones de cada venta en el listado (mostrar.php); usa $d = fila de orders
 if (!isset($d)) {
     exit;
 }

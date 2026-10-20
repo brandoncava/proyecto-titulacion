@@ -9,7 +9,6 @@ requiere_permiso("ventas");
 $empresa_nombre = 'CK Computers';
 $empresa_direccion = ['Trujillo', 'Stand A 109, ORO AZUL'];
 $empresa_ruc = 'RUC: 10469119667';
-$empresa_web = 'ventapro.pe/c/ck-computers';
 
 /* ID de la venta a imprimir */
 $id = filter_input(INPUT_GET, "id", FILTER_VALIDATE_INT) ?: 0;
@@ -58,7 +57,6 @@ class Boleta extends FPDF
     public $empresa_nombre;
     public $empresa_direccion = [];
     public $empresa_ruc;
-    public $empresa_web;
     public $datos_venta = [];
 
     function Header()
@@ -83,8 +81,6 @@ class Boleta extends FPDF
         }
         $this->SetX($margen);
         $this->Cell(90, 6, utf8_decode($this->empresa_ruc), 0, 1);
-        $this->SetX($margen);
-        $this->Cell(90, 6, utf8_decode($this->empresa_web), 0, 1);
 
         $leftEndY = $this->GetY();
 
@@ -131,7 +127,6 @@ $pdf = new Boleta('P', 'mm', 'A4');
 $pdf->empresa_nombre    = $empresa_nombre;
 $pdf->empresa_direccion = $empresa_direccion;
 $pdf->empresa_ruc       = $empresa_ruc;
-$pdf->empresa_web       = $empresa_web;
 $esFactura = (($row['tipc'] ?? '') === 'Factura');
 $docTipo   = (string)($row['doc_tipo'] ?? '');
 $docNum    = (string)($row['doc_num'] ?? '');
