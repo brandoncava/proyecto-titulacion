@@ -2015,3 +2015,105 @@ td form:has(.form-group) {
     cursor: pointer;
 }
 .tarjeta-form .label-con-accion label.enlace-accion:hover { text-decoration: underline; }
+
+/* -----------------------------FINALIZAR VENTA--------------------------*/
+.checkout-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr);
+    gap: 1.25rem;
+    align-items: start;
+}
+.checkout-columna {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+/* el resumen acompana al bajar */
+.resumen-venta {
+    position: sticky;
+    top: 80px;
+}
+.resumen-items {
+    max-height: 320px;
+    overflow-y: auto;
+}
+.resumen-items li {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px dashed #eaecf0;
+    font-size: .85rem;
+}
+.resumen-items .resumen-nombre {
+    display: block;
+    color: var(--color-dark);
+    font-weight: 500;
+}
+.resumen-items small {
+    color: var(--text-grey);
+}
+.resumen-items b {
+    white-space: nowrap;
+    color: var(--color-dark);
+}
+.resumen-totales {
+    margin-top: 12px;
+}
+.resumen-totales div {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    font-size: .9rem;
+    color: var(--text-grey);
+}
+.resumen-totales dd {
+    color: var(--color-dark);
+}
+.resumen-totales .total {
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 1px solid #eaecf0;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--color-dark);
+}
+.resumen-totales .total dd {
+    color: var(--main-color);
+}
+.comprobante-emitido {
+    margin-top: 14px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #f4ebff;
+    color: #42307d;
+    font-size: .9rem;
+    text-align: center;
+}
+.nota.alerta {
+    color: #B42318;
+}
+.nota.sin-margen {
+    margin: 0 0 12px;
+}
+/* filas de pago dentro de la tarjeta */
+.tarjeta-form .fila-pago .pago-metodo {
+    flex: 1 1 170px;
+    width: auto;
+}
+.fila-pago .pago-monto-caja {
+    flex: 1 1 150px;
+}
+.tarjeta-form .fila-pago .pago-operacion {
+    flex: 1 1 150px;
+    width: auto;
+}
+.btn-primario:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+@media screen and (max-width: 1000px) {
+    .checkout-grid { grid-template-columns: 1fr; }
+    .resumen-venta { position: static; order: -1; }
+}

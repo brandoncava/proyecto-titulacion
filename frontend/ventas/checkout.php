@@ -4,27 +4,29 @@ require_once __DIR__ . '/../../backend/config/auth.php';
 
 requiere_permiso('ventas');
 
-$seccion = 'ventas';
-$migas = 'Ventas / Finalizar pago';
-require __DIR__ . '/../layout/cabecera.php';
-
 require_once('../../backend/config/Conexion.php');
 $user_id = $_SESSION['id'];
 $modifica = $_SESSION['modifica_venta'] ?? null;
 
 // se cobra el precio guardado en el carrito
 $select_cart_items = $connect->prepare(
-    'SELECT c.name, c.price, c.quantity FROM cart c WHERE c.user_id = ?'
+    'SELECT c.name, c.price, c.quantity FROM cart c WHERE c.user_id = ? ORDER BY c.idv'
 );
 $select_cart_items->execute([$user_id]);
 $items = $select_cart_items->fetchAll(PDO::FETCH_ASSOC);
 
 $cart_grand_total = 0;
+$unidades = 0;
 foreach ($items as $it) {
     $cart_grand_total += $it['price'] * $it['quantity'];
+    $unidades += (int)$it['quantity'];
 }
 $cart_grand_total = round($cart_grand_total, 2);
 list($c_base, $c_igv) = igv_desglosar($cart_grand_total);
+
+$seccion = 'ventas';
+$migas = 'Ventas / Finalizar venta';
+require __DIR__ . '/../layout/cabecera.php';
 ?>
 
             <div class="page-content">
@@ -33,57 +35,88 @@ list($c_base, $c_igv) = igv_desglosar($cart_grand_total);
                 <?php include __DIR__ . '/aviso_modificacion.php'; ?>
 <?php endif; ?>
 
-                <div class="input-block">
-<?php if ($items): ?>
-<?php foreach ($items as $it): ?>
-   <p> <?php echo e($it['name']); ?> <span>(S/<?php echo number_format($it['price'], 2); ?> x <?php echo (int)$it['quantity']; ?>)</span> </p>
-<?php endforeach; ?>
+                <div class="cabecera-form">
+                    <div>
+                        <h1>Finalizar venta</h1>
+                        <p>Indica el cliente, registra el pago y confirma</p>
+                    </div>
+                    <div class="cabecera-form-botones">
+                        <a href="cart.php" class="btn-secundario"><span class="las la-arrow-left"></span> Volver al carrito</a>
+                        <button type="submit" form="form-venta" id="validate" name="order" class="btn-primario"<?php echo $items ? '' : ' disabled'; ?>>
+                            <span class="las la-check-circle"></span> Confirmar venta
+                        </button>
+                    </div>
+                </div>
+
+<?php if (!$items): ?>
+                <p class="alert">Tu carrito está vacío. <a href="nuevo.php">Agrega productos</a> para registrar una venta.</p>
 <?php else: ?>
-   <p class="alert alert-warning">Tu carrito esta vació</p>
+                <div class="checkout-grid">
+
+                    <form action="" method="POST" autocomplete="off" id="form-venta" class="checkout-columna">
+                        <?php echo csrf_campo(); ?>
+
+                        <section class="tarjeta-form">
+                            <h2><span class="las la-user"></span> Cliente</h2>
+
+                            <div class="fila-campos">
+                                <div>
+                                    <label for="doctipo">Documento</label>
+                                    <select name="doctipo" id="doctipo">
+                                        <option value="">Sin documento (boleta hasta S/ 700)</option>
+                                        <option value="DNI"<?php echo ($modifica['doc_tipo'] ?? '') === 'DNI' ? ' selected' : ''; ?>>DNI → Boleta</option>
+                                        <option value="RUC"<?php echo ($modifica['doc_tipo'] ?? '') === 'RUC' ? ' selected' : ''; ?>>RUC → Factura</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="docnum">Número de documento</label>
+                                    <input type="text" name="docnum" id="docnum" inputmode="numeric" maxlength="11" placeholder="Número de documento" value="<?php echo e($modifica['doc_num'] ?? ''); ?>" disabled>
+                                </div>
+                            </div>
+
+                            <label for="nomcl">Nombre o razón social</label>
+                            <input type="text" name="nomcl" id="nomcl" maxlength="150" value="<?php echo e($modifica['nomcl'] ?? ''); ?>" placeholder="Solo si el cliente es nuevo; si ya existe se usa el registrado">
+
+                            <p class="nota" id="aviso-comprobante"></p>
+                        </section>
+
+                        <section class="tarjeta-form">
+                            <h2><span class="las la-wallet"></span> Pagos <span class="req">*</span></h2>
+
+                            <p class="nota sin-margen"><span class="las la-info-circle"></span> Puedes combinar medios (ej. parte en efectivo y parte con Yape). Yape, Plin y transferencia piden el número de operación.</p>
+                            <div id="pagos"></div>
+                            <button type="button" id="agregar-pago" class="btn-agregar-pago"><span class="las la-plus"></span> Agregar otro medio de pago</button>
+                            <p id="estado-pagos" class="estado-pagos"></p>
+                        </section>
+                    </form>
+
+                    <aside class="tarjeta-form resumen-venta">
+                        <h2><span class="las la-receipt"></span> Resumen de la venta</h2>
+
+                        <ul class="resumen-items">
+<?php foreach ($items as $it): ?>
+                            <li>
+                                <div>
+                                    <span class="resumen-nombre"><?php echo e($it['name']); ?></span>
+                                    <small><?php echo (int)$it['quantity']; ?> × S/ <?php echo number_format($it['price'], 2); ?></small>
+                                </div>
+                                <b>S/ <?php echo number_format($it['price'] * $it['quantity'], 2); ?></b>
+                            </li>
+<?php endforeach; ?>
+                        </ul>
+
+                        <dl class="resumen-totales">
+                            <div><dt>Productos</dt><dd><?php echo $unidades; ?> unid.</dd></div>
+                            <div><dt>Op. gravada</dt><dd>S/ <?php echo number_format($c_base, 2); ?></dd></div>
+                            <div><dt>IGV (<?php echo IGV_TASA * 100; ?>%)</dt><dd>S/ <?php echo number_format($c_igv, 2); ?></dd></div>
+                            <div class="total"><dt>Total</dt><dd>S/ <?php echo number_format($cart_grand_total, 2); ?></dd></div>
+                        </dl>
+
+                        <p class="comprobante-emitido">Se emitirá: <b id="tipo-emitido">Boleta</b></p>
+                    </aside>
+
+                </div>
 <?php endif; ?>
-   <div class="grand-total">Op. gravada : <span>S/<?php echo number_format($c_base, 2); ?></span></div>
-   <div class="grand-total">IGV (<?php echo IGV_TASA * 100; ?>%) : <span>S/<?php echo number_format($c_igv, 2); ?></span></div>
-   <div class="grand-total">Total (incluye IGV) : <span>S/<?php echo number_format($cart_grand_total, 2); ?></span></div>
- </div>
-
-<form action="" method="POST" autocomplete="off" id="form-venta">
-<?php echo csrf_campo(); ?>
-  <div class="containerss">
-    <h1>Finalizar venta</h1>
-    <div class="alert-danger">
-  <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
-  <strong>Importante!</strong> Es importante rellenar los campos con &nbsp;<span class="badge-warning">*</span>
-</div>
-    <hr>
-    <br>
-
-    <label for="doctipo"><b>Documento del cliente</b></label>
-    <select name="doctipo" id="doctipo">
-        <option value="">Sin documento (solo boleta de hasta S/ 700)</option>
-        <option value="DNI"<?php echo ($modifica['doc_tipo'] ?? '') === 'DNI' ? ' selected' : ''; ?>>DNI &rarr; Boleta</option>
-        <option value="RUC"<?php echo ($modifica['doc_tipo'] ?? '') === 'RUC' ? ' selected' : ''; ?>>RUC &rarr; Factura</option>
-    </select>
-
-    <input type="text" name="docnum" id="docnum" inputmode="numeric" maxlength="11" placeholder="Número de documento" value="<?php echo e($modifica['doc_num'] ?? ''); ?>" disabled>
-
-    <label for="nomcl"><b>Nombre o razón social del cliente</b></label>
-    <input type="text" name="nomcl" id="nomcl" maxlength="150" value="<?php echo e($modifica['nomcl'] ?? ''); ?>" placeholder="Solo si el cliente es nuevo; si ya existe se usa el registrado">
-
-    <p id="aviso-comprobante" style="margin:10px 0;font-size:15px;">Se emitirá: <b id="tipo-emitido">Boleta</b></p>
-
-    <label><b>Pagos</b></label><span class="badge-warning">*</span>
-    <p class="ayuda-pagos">Puedes combinar medios (ej. parte en efectivo y parte con Yape). Yape, Plin y transferencia piden el número de operación.</p>
-    <div id="pagos"></div>
-    <button type="button" id="agregar-pago" class="btn-agregar-pago"><span class="las la-plus"></span> Agregar otro medio de pago</button>
-    <p id="estado-pagos" class="estado-pagos"></p>
-
-    <hr>
-
-    <button type="submit" id="validate" name="order" class="registerbtn <?= ($cart_grand_total > 1)?'':'disabled'; ?>">Guardar</button>
-    <button type="button" onclick="location.href='cart.php'" class="pabtn ">Cancelar</button>
-  </div>
-
-</form>
 
             </div>
 
@@ -95,7 +128,10 @@ list($c_base, $c_igv) = igv_desglosar($cart_grand_total);
             <option value="<?php echo $m; ?>"><?php echo $m === 'Contado' ? 'Contado (efectivo)' : $m; ?></option>
 <?php endforeach; ?>
         </select>
-        <input type="number" name="pago_monto[]" class="pago-monto" step="0.01" min="0.01" placeholder="Monto S/" required>
+        <div class="campo-con-unidad pago-monto-caja">
+            <span class="unidad">S/</span>
+            <input type="number" name="pago_monto[]" class="pago-monto" step="0.01" min="0.01" placeholder="Monto" required>
+        </div>
         <input type="text" name="pago_operacion[]" class="pago-operacion" maxlength="30" placeholder="N° de operación" hidden>
         <button type="button" class="quitar-pago" title="Quitar este pago"><span class="las la-times"></span></button>
     </div>
@@ -106,6 +142,8 @@ list($c_base, $c_igv) = igv_desglosar($cart_grand_total);
     <script type="text/javascript" src="../../backend/js/reenvio.js"></script>
     <script type="text/javascript">
     (function () {
+        var form = document.getElementById('form-venta');
+        if (!form) { return; }
         var total = <?php echo json_encode($cart_grand_total); ?>;
         var limite = <?php echo json_encode(LIMITE_BOLETA_SIN_DNI); ?>;
         var conOperacion = <?php echo json_encode(METODOS_CON_OPERACION); ?>;
@@ -114,6 +152,7 @@ list($c_base, $c_igv) = igv_desglosar($cart_grand_total);
         var tipo = document.getElementById('doctipo');
         var num = document.getElementById('docnum');
         var aviso = document.getElementById('aviso-comprobante');
+        var emitido = document.getElementById('tipo-emitido');
 
         function actualizarDoc() {
             var t = tipo.value;
@@ -121,13 +160,14 @@ list($c_base, $c_igv) = igv_desglosar($cart_grand_total);
             num.required = (t !== '');
             if (t === '') { num.value = ''; }
             num.maxLength = (t === 'RUC') ? 11 : 8;
-            num.placeholder = (t === 'RUC') ? 'RUC (11 dígitos)' : (t === 'DNI' ? 'DNI (8 dígitos)' : 'Número de documento');
+            num.placeholder = (t === 'RUC') ? 'RUC (11 dígitos)' : (t === 'DNI' ? 'DNI (8 dígitos)' : 'Elige el tipo de documento');
             if (num.value.length > num.maxLength) { num.value = num.value.slice(0, num.maxLength); }
+            emitido.textContent = (t === 'RUC') ? 'Factura' : 'Boleta';
             var falta = (t === '' && total > limite);
-            aviso.style.color = falta ? '#B42318' : '';
+            aviso.className = 'nota' + (falta ? ' alerta' : '');
             aviso.innerHTML = falta
-                ? 'El total supera S/ ' + limite.toFixed(2) + ': ingresa el <b>DNI</b> del cliente (o su <b>RUC</b> para factura).'
-                : 'Se emitirá: <b>' + (t === 'RUC' ? 'Factura' : 'Boleta') + '</b>';
+                ? '<span class="las la-exclamation-triangle"></span> El total supera S/ ' + limite.toFixed(2) + ': ingresa el DNI del cliente (o su RUC para factura).'
+                : '<span class="las la-info-circle"></span> Con DNI o sin documento se emite boleta; con RUC, factura.';
         }
         num.addEventListener('input', function () { num.value = num.value.replace(/\D/g, ''); });
         tipo.addEventListener('change', actualizarDoc);
@@ -137,7 +177,6 @@ list($c_base, $c_igv) = igv_desglosar($cart_grand_total);
         var cont = document.getElementById('pagos');
         var plantilla = document.getElementById('fila-pago');
         var estado = document.getElementById('estado-pagos');
-        var guardar = document.getElementById('validate');
 
         function pagado() {
             var s = 0;
@@ -182,7 +221,7 @@ list($c_base, $c_igv) = igv_desglosar($cart_grand_total);
             agregarFila(Math.max(0, Math.round((total - pagado()) * 100) / 100));
         });
 
-        document.getElementById('form-venta').addEventListener('submit', function (ev) {
+        form.addEventListener('submit', function (ev) {
             if (Math.round((total - pagado()) * 100) !== 0) {
                 ev.preventDefault();
                 swal('Revisa los pagos', estado.textContent, 'warning');
