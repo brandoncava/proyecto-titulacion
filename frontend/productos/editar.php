@@ -48,6 +48,10 @@ if($sentencia){
 
     <label for="email"><b>Precio del producto</b></label><span class="badge-warning">*</span>
     <input type="text" value="<?php echo e($d->precio); ?>" onKeypress="if (event.keyCode < 45 || event.keyCode > 57) event.returnValue = false;"  placeholder="ejm: 299" name="prdprec"  required>
+
+    <label for="prdstock"><b>Stock</b></label><span class="badge-warning">*</span>
+    <input type="number" id="prdstock" name="prdstock" min="0" step="1" value="<?php echo (int)$d->stock; ?>" required>
+    <p class="ayuda-pagos">Si cambias el stock (por un conteo o una merma), la diferencia queda registrada en el kardex como ajuste. Las compras y ventas lo actualizan solas.</p>
     
     <label for="psw"><b>Marca del producto</b></label><span class="badge-warning">*</span>
     <select required name="prdmarc" id="marc">

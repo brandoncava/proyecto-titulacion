@@ -79,18 +79,19 @@ if($sentencia){
                                     
 
                                     <td>
-                                       <a title="Actualizar" href="../productos/editar.php?id=<?php echo e($d->idprod); ?>" class="fa fa-pencil tooltip"></a>
-
-                                       <a title="Stock" href="../productos/stock.php?id=<?php echo e($d->idprod); ?>" class="fa fa-bookmark-o tooltip"></a>
-
-                                       <a title="Imagen" href="../productos/foto.php?id=<?php echo e($d->idprod); ?>" class="fa fa-picture-o tooltip"></a>
-                                     
-                                     <form  onsubmit="return confirm('Realmente desea eliminar el registro?');" method='POST' action='<?php $_SERVER['PHP_SELF'] ?>'>
-<input type='hidden' name='idprod' value="<?php echo e($d->idprod); ?>">
-
-<?php echo csrf_campo(); ?>
-<button name='delete_product' style="cursor: pointer;" class="fa fa-trash"></button>
-</form> 
+                                        <div class="acciones">
+<?php if (puede('productos_ed')): ?>
+                                            <a class="btn-icono" title="Editar (datos, precio y stock)" href="../productos/editar.php?id=<?php echo e($d->idprod); ?>"><span class="las la-pen"></span></a>
+                                            <a class="btn-icono" title="Cambiar foto" href="../productos/foto.php?id=<?php echo e($d->idprod); ?>"><span class="las la-image"></span></a>
+<?php endif; ?>
+<?php if (puede('productos_el')): ?>
+                                            <form method="POST" action="" onsubmit="return confirm('¿Realmente desea eliminar este producto?');">
+                                                <input type="hidden" name="idprod" value="<?php echo e($d->idprod); ?>">
+                                                <?php echo csrf_campo(); ?>
+                                                <button class="btn-icono peligro" name="delete_product" title="Eliminar"><span class="las la-trash-alt"></span></button>
+                                            </form>
+<?php endif; ?>
+                                        </div>
                                     </td>
                                    
                                 </tr>
