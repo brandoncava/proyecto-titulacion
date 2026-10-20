@@ -186,7 +186,7 @@ require __DIR__ . '/../layout/cabecera.php';
                                     <td>S/<?php echo number_format($v->igv, 2); ?></td>
                                     <td data-order="<?php echo e($v->total_price); ?>">S/<?php echo number_format($v->total_price, 2); ?></td>
 <?php if ((int)$v->anulada === 1): ?>
-                                    <td><span class="estado-anulada" title="<?php echo e($v->motivo_anulacion); ?>">ANULADA</span></td>
+                                    <td><span class="chip peligro" title="<?php echo e($v->motivo_anulacion); ?>">ANULADA</span></td>
 <?php else: ?>
                                     <td>Válida</td>
 <?php endif; ?>

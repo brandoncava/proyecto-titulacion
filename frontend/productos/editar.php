@@ -46,7 +46,7 @@ require __DIR__ . '/../layout/cabecera.php';
 
             <div class="page-content">
 <?php if (!$producto): ?>
-                <p class="alert alert-warning">No se encontró el producto.</p>
+                <p class="alert">No se encontró el producto.</p>
 <?php else: ?>
 <?php include __DIR__ . '/formulario.php'; ?>
 <?php endif; ?>

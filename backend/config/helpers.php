@@ -16,6 +16,13 @@ const GARANTIA_ESTADOS = [
     'Entregado'     => 'Completado / Entregado',
 ];
 const GARANTIA_RESULTADOS = ['Reparado', 'Reemplazado', 'Rechazado'];
+// color de la etiqueta (.chip) de cada estado de garantia
+const GARANTIA_CHIP = [
+    'Ingresado' => 'info', 'Enviado' => 'alerta', 'En evaluacion' => 'alerta',
+    'Resuelto' => 'morado', 'Listo' => 'morado', 'Entregado' => 'ok',
+];
+// desde cuantas unidades se avisa "stock bajo" (listado de productos y reporte de inventario)
+const STOCK_BAJO = 5;
 // comprobantes de venta (ruc = factura, dni o sin dato = boleta)
 const COMPROBANTES = ['Boleta', 'Factura'];
 // boleta por mas de este monto pide el dni del comprador
@@ -158,6 +165,63 @@ function anular_venta_tx($connect, $idord, $motivo, $user_id)
     return count($lineas);
 }
 
+// datos del formulario de cliente (clientes/formulario.php), ya validados:
+// [tipd, nudoc, nocl, apcl, telfcl, emailcl, promos] o null con el motivo en $error
+function leer_datos_cliente(&$error)
+{
+    $error = '';
+    $tipd   = strtoupper(trim($_POST['tipcl'] ?? ''));
+    $nudoc  = preg_replace('/\D/', '', (string)($_POST['numcl'] ?? ''));
+    $nocl   = mb_substr(trim($_POST['nomcl'] ?? ''), 0, 150);
+    $apcl   = mb_substr(trim($_POST['apecl'] ?? ''), 0, 60);
+    $telfcl = preg_replace('/\D/', '', (string)($_POST['telcl'] ?? ''));
+    $email  = leer_correo($_POST['emailcl'] ?? '', 100);   // null = no valido
+    $promos = !empty($_POST['promos']) ? 1 : 0;
+
+    if ($tipd !== 'DNI' && $tipd !== 'RUC') {
+        $error = 'Elige el tipo de documento (DNI o RUC).';
+    } elseif ($tipd === 'DNI' && !validar_dni($nudoc)) {
+        $error = 'El DNI debe tener 8 dígitos.';
+    } elseif ($tipd === 'RUC' && !validar_ruc($nudoc)) {
+        $error = 'RUC no válido: debe tener 11 dígitos y un dígito verificador correcto.';
+    } elseif ($nocl === '') {
+        $error = $tipd === 'RUC' ? 'Escribe la razón social.' : 'Escribe los nombres del cliente.';
+    } elseif ($telfcl !== '' && !preg_match('/^\d{9}$/', $telfcl)) {
+        $error = 'El teléfono debe tener 9 dígitos.';
+    } elseif ($email === null) {
+        $error = 'Revisa el correo electrónico.';
+    } elseif ($promos && $email === '') {
+        $error = 'Para recibir promociones el cliente debe dar su correo.';
+    }
+    if ($error !== '') {
+        return null;
+    }
+    // una empresa no tiene apellidos
+    if ($tipd === 'RUC') {
+        $apcl = '';
+    }
+    return [$tipd, $nudoc, $nocl, $apcl, $telfcl, $email !== '' ? $email : null, $promos];
+}
+
+// datos de un usuario del sistema (accesos/formulario.php): [nombre, username, correo]
+// o null con el motivo en $error. Los largos son los de la tabla usuarios
+function leer_datos_usuario($nombre, $username, $correo, &$error)
+{
+    $error    = '';
+    $nombre   = trim((string)$nombre);
+    $username = trim((string)$username);
+    $correo   = leer_correo($correo, 35);
+
+    if ($nombre === '' || mb_strlen($nombre) > 35) {
+        $error = 'Escribe el nombre completo (hasta 35 caracteres).';
+    } elseif (!preg_match('/^[A-Za-z0-9._-]{3,25}$/', $username)) {
+        $error = 'El usuario debe tener de 3 a 25 letras, números, punto, guion o guion bajo, sin espacios.';
+    } elseif ($correo === null || $correo === '') {
+        $error = 'Revisa el correo electrónico (hasta 35 caracteres).';
+    }
+    return $error === '' ? [$nombre, $username, $correo] : null;
+}
+
 // ej: GAR-000001
 function formato_garantia($idgar)
 {
@@ -208,6 +272,113 @@ swal(' . json_encode($titulo) . ', ' . json_encode($texto) . ', ' . json_encode(
     window.location = ' . json_encode($destino) . ';
 });
 </script>';
+}
+
+// los dos carritos del sistema. El de venta cobra el precio del producto (con igv) y no
+// pasa del stock; el de compra guarda el costo sin igv que escribe el usuario.
+//   sesion: clave de $_SESSION con la venta/compra que se esta modificando
+const CARRITOS = [
+    'venta'  => ['tabla' => 'cart',          'id' => 'idv',   'permiso' => 'ventas',  'sesion' => 'modifica_venta'],
+    'compra' => ['tabla' => 'cart_purchase', 'id' => 'idcpr', 'permiso' => 'compras', 'sesion' => 'modifica_compra'],
+];
+
+// lineas del carrito del usuario con los datos actuales del producto
+function carrito_lineas($connect, $tipo, $user_id)
+{
+    $c = CARRITOS[$tipo];
+    $consulta = $connect->prepare(
+        "SELECT c.{$c['id']} AS idlinea, c.idprod, c.name, c.price, c.quantity, p.codpro, p.nomprd, p.stock
+           FROM {$c['tabla']} c INNER JOIN productos p ON p.idprod = c.idprod
+          WHERE c.user_id = ? ORDER BY c.{$c['id']}"
+    );
+    $consulta->execute([(int)$user_id]);
+    return $consulta->fetchAll(PDO::FETCH_ASSOC);
+}
+
+// agrega el producto al carrito; si ya estaba, suma las unidades (y en compras toma el costo nuevo).
+// $stock: tope de unidades (ventas) o null sin tope (compras). Avisa y redirige
+function carrito_agregar($connect, $tipo, $user_id, $idprod, $nombre, $precio, $cantidad, $stock = null)
+{
+    $c = CARRITOS[$tipo];
+    $buscar = $connect->prepare("SELECT {$c['id']} AS idlinea, quantity FROM {$c['tabla']} WHERE idprod = ? AND user_id = ?");
+    $buscar->execute([$idprod, $user_id]);
+    $linea = $buscar->fetch();
+
+    if (!$linea) {
+        $connect->prepare("INSERT INTO {$c['tabla']} (user_id, idprod, name, price, quantity) VALUES (?, ?, ?, ?, ?)")
+                ->execute([$user_id, $idprod, $nombre, $precio, $cantidad]);
+        avisar_y_redirigir('¡Registrado!', 'Agregado correctamente', 'success', 'cart.php');
+        return;
+    }
+
+    $total = (int)$linea->quantity + (int)$cantidad;
+    if ($stock !== null && $total > (int)$stock) {
+        avisar_y_redirigir('Stock insuficiente', 'Ya tienes ' . (int)$linea->quantity . ' en el carrito y solo hay ' . (int)$stock . ' unidades de "' . $nombre . '".', 'warning', 'nuevo.php');
+        return;
+    }
+
+    // el precio de venta se mantiene (el guardado al agregar); el costo de compra es el ultimo escrito
+    $sql = $tipo === 'compra'
+        ? "UPDATE {$c['tabla']} SET quantity = ?, price = ? WHERE {$c['id']} = ?"
+        : "UPDATE {$c['tabla']} SET quantity = ? WHERE {$c['id']} = ?";
+    $connect->prepare($sql)->execute($tipo === 'compra' ? [$total, $precio, $linea->idlinea] : [$total, $linea->idlinea]);
+    avisar_y_redirigir('¡Actualizado!', 'Ya estaba en el carrito: se sumaron ' . (int)$cantidad . ' unidad(es). Ahora tienes ' . $total . '.', 'success', 'cart.php');
+}
+
+// quita una linea del carrito propio (nunca la de otro usuario)
+function carrito_quitar($connect, $tipo, $idlinea, $user_id)
+{
+    $c = CARRITOS[$tipo];
+    return $connect->prepare("DELETE FROM {$c['tabla']} WHERE {$c['id']} = ? AND user_id = ?")
+                   ->execute([$idlinea, $user_id]);
+}
+
+function carrito_vaciar($connect, $tipo, $user_id)
+{
+    $connect->prepare('DELETE FROM ' . CARRITOS[$tipo]['tabla'] . ' WHERE user_id = ?')->execute([$user_id]);
+}
+
+// correo opcional: '' si viene vacio, null si no es valido o pasa de $max caracteres
+function leer_correo($valor, $max)
+{
+    $correo = strtolower(trim((string)$valor));
+    if ($correo === '') {
+        return '';
+    }
+    return (strlen($correo) <= $max && filter_var($correo, FILTER_VALIDATE_EMAIL)) ? $correo : null;
+}
+
+// baja logica (state = 0) de un registro y aviso con regreso al listado.
+//   $nombre  como se nombra en los avisos, ej. ['La categoría', 'dada'] o ['El cliente', 'dado']
+//   $enUso   opcional [sql que cuenta lo que lo usa (un ? = id), mensaje si lo usan]: impide la baja
+function dar_de_baja($connect, $tabla, $columnaId, $id, $nombre, $volver, $enUso = null)
+{
+    [$sujeto, $dado] = $nombre;
+
+    if (!$id) {
+        avisar_y_redirigir('Error!', 'Identificador no válido.', 'error', $volver);
+        return;
+    }
+
+    if ($enUso) {
+        $cuenta = $connect->prepare($enUso[0]);
+        $cuenta->execute([$id]);
+        $usos = (int)$cuenta->fetchColumn();
+        if ($usos > 0) {
+            avisar_y_redirigir('No se puede', str_replace('{n}', (string)$usos, $enUso[1]), 'warning', $volver);
+            return;
+        }
+    }
+
+    // $tabla y $columnaId vienen del codigo, nunca del usuario
+    $sql = $connect->prepare("UPDATE `$tabla` SET state = 0 WHERE `$columnaId` = ? AND state = 1");
+    $sql->execute([$id]);
+
+    if ($sql->rowCount() > 0) {
+        avisar_y_redirigir('Dado de baja!', $sujeto . ' ya no aparece en el listado.', 'success', $volver);
+    } else {
+        avisar_y_redirigir('Sin cambios', $sujeto . ' no existe o ya estaba ' . $dado . ' de baja.', 'warning', $volver);
+    }
 }
 
 // null = no se envio archivo, false = error (queda en $error), string = nombre guardado

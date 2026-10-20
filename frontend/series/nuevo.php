@@ -7,36 +7,41 @@ requiere_permiso('series');
 $seccion = 'series';
 $migas = 'Series / Nueva';
 require __DIR__ . '/../layout/cabecera.php';
+
+$cabecera = [
+    'titulo'    => 'Nueva serie',
+    'subtitulo' => 'Numeración de boletas o facturas',
+    'form'      => 'form-serie',
+    'boton'     => 'ins_serie',
+    'texto'     => 'Guardar serie',
+];
 ?>
 
             <div class="page-content">
+<?php include __DIR__ . '/../layout/cabecera_form.php'; ?>
 
-<form action="" method="POST" autocomplete="off">
-<?php echo csrf_campo(); ?>
-  <div class="containerss">
-    <h1>Nueva serie</h1>
-    <div class="alert-danger">
-      <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
-      <strong>Importante!</strong> Es importante rellenar los campos con &nbsp;<span class="badge-warning">*</span>
-    </div>
-    <hr>
-    <br>
-
-    <label for="tipc"><b>Comprobante</b></label><span class="badge-warning">*</span>
-    <select required name="tipc" id="tipc">
-        <option value="">Seleccione</option>
-        <option value="Boleta">Boleta</option>
-        <option value="Factura">Factura</option>
-    </select>
-
-    <label for="serie"><b>Serie</b></label><span class="badge-warning">*</span>
-    <input type="text" id="serie" placeholder="ejm: B002 o F002" name="serie" maxlength="4" style="text-transform:uppercase;" required>
-    <hr>
-
-    <button type="submit" name="ins_serie" class="registerbtn">Guardar</button>
-  </div>
-</form>
-
+                <form id="form-serie" action="" method="POST" autocomplete="off" class="tarjetas-form simple">
+                    <?php echo csrf_campo(); ?>
+                    <section class="tarjeta-form">
+                        <h2><span class="las la-file-invoice"></span> Datos de la serie</h2>
+                        <div class="fila-campos">
+                            <div>
+                                <label for="tipc">Comprobante <span class="req">*</span></label>
+                                <select id="tipc" name="tipc" required>
+                                    <option value="">Seleccione</option>
+<?php foreach (COMPROBANTES as $comp): ?>
+                                    <option value="<?php echo e($comp); ?>"><?php echo e($comp); ?></option>
+<?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="serie">Serie <span class="req">*</span></label>
+                                <input type="text" id="serie" name="serie" maxlength="4" class="mayusculas" placeholder="ej. B002 o F002" required>
+                            </div>
+                        </div>
+                        <p class="nota"><span class="las la-info-circle"></span> 4 caracteres: las de boleta empiezan con B y las de factura con F. Si ya hay una serie en uso, la nueva queda inactiva hasta que la actives.</p>
+                    </section>
+                </form>
             </div>
 
 <?php require __DIR__ . '/../layout/pie.php'; ?>

@@ -16,6 +16,7 @@ include_once '../backend/php/login.php';
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CK COMPUTERS</title>
   <link rel="icon" type="image/svg+xml" href="../backend/img/ck-icono.svg">
+  <link rel="stylesheet" href="https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css">
   <link rel="stylesheet" type="text/css" href="../backend/css/style.css">
 </head>
 <body class="login-page">
@@ -33,13 +34,13 @@ include_once '../backend/php/login.php';
 
         <div class="input-container">
           <label for="usuario">Nombre de usuario</label>
-          <input type="text" id="usuario" name="username" value="<?php echo e($_POST['username'] ?? ''); ?>" autocomplete="off">
+          <input type="text" id="usuario" name="username" value="<?php echo e($_POST['username'] ?? ''); ?>" autocomplete="username" required>
         </div>
 
         <div class="input-container password">
           <label for="contra">Contraseña</label>
-          <input type="password" id="contra" name="password" placeholder="Mínimo de 6 caracteres">
-          <i class="far fa-eye-slash"></i>
+          <input type="password" id="contra" name="password" placeholder="Mínimo de 6 caracteres" autocomplete="current-password" required>
+          <button type="button" class="ver-clave" id="ver-clave" title="Mostrar contraseña" aria-label="Mostrar contraseña"><span class="las la-eye"></span></button>
         </div>
 
         <label class="checkbox-container">
@@ -60,8 +61,17 @@ include_once '../backend/php/login.php';
     </section>
   </main>
 
-  <script src="../backend/js/jquery.min.js"></script>
-  <script type="text/javascript" src="../backend/js/validate.js"></script>
+  <script>
+  // muestra u oculta la contraseña
+  document.getElementById('ver-clave').addEventListener('click', function () {
+    var campo = document.getElementById('contra');
+    var mostrar = campo.type === 'password';
+    campo.type = mostrar ? 'text' : 'password';
+    this.firstElementChild.className = mostrar ? 'las la-eye-slash' : 'las la-eye';
+    this.title = mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña';
+    this.setAttribute('aria-label', this.title);
+  });
+  </script>
   <script type="text/javascript" src="../backend/js/reenvio.js"></script>
 </body>
 </html>

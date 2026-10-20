@@ -32,7 +32,7 @@ require __DIR__ . '/../layout/cabecera.php';
             <div class="page-content">
 
 <?php if ($modifica): ?>
-                <?php include __DIR__ . '/aviso_modificacion.php'; ?>
+                <?php $tipoCarrito = 'venta'; include __DIR__ . '/../comun/aviso_modificacion.php'; ?>
 <?php endif; ?>
 
                 <div class="cabecera-form">

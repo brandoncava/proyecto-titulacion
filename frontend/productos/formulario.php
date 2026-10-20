@@ -22,18 +22,16 @@ if (!in_array((int)$p->garantia_meses, $opcionesGarantia, true)) {
     sort($opcionesGarantia);
 }
 ?>
-                <div class="cabecera-form">
-                    <div>
-                        <h1><?php echo $esNuevo ? 'Nuevo producto' : 'Editar producto'; ?></h1>
-                        <p><?php echo $esNuevo ? 'Registra un producto y su stock inicial' : 'Actualiza la información y controla el inventario'; ?></p>
-                    </div>
-                    <div class="cabecera-form-botones">
-                        <a href="mostrar.php" class="btn-secundario">Cancelar</a>
-                        <button type="submit" form="form-producto" name="<?php echo $esNuevo ? 'add_prodct' : 'upd_prodct'; ?>" class="btn-primario">
-                            <span class="las la-save"></span> <?php echo $esNuevo ? 'Guardar producto' : 'Guardar cambios'; ?>
-                        </button>
-                    </div>
-                </div>
+<?php
+$cabecera = [
+    'titulo'    => $esNuevo ? 'Nuevo producto' : 'Editar producto',
+    'subtitulo' => $esNuevo ? 'Registra un producto y su stock inicial' : 'Actualiza la información y controla el inventario',
+    'form'      => 'form-producto',
+    'boton'     => $esNuevo ? 'add_prodct' : 'upd_prodct',
+    'texto'     => $esNuevo ? 'Guardar producto' : 'Guardar cambios',
+];
+include __DIR__ . '/../layout/cabecera_form.php';
+?>
 
                 <form id="form-producto" action="" method="POST" enctype="multipart/form-data" autocomplete="off" class="tarjetas-form" data-nuevo="<?php echo $esNuevo ? 1 : 0; ?>">
                     <?php echo csrf_campo(); ?>

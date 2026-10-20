@@ -8,7 +8,7 @@ if (isset($_POST['ins_marca'])) {
 
     csrf_validar();
 
-    $nombre = trim($_POST['nommar'] ?? '');
+    $nombre = mb_substr(trim($_POST['nommar'] ?? ''), 0, 100);
 
     if ($nombre === '') {
         avisar_y_redirigir('Error!', 'Escribe el nombre de la marca.', 'error', '../marcas/nuevo.php');

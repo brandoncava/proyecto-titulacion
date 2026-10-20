@@ -4,88 +4,14 @@ require_once __DIR__ . '/../../backend/config/auth.php';
 
 requiere_permiso('ventas');
 
+$tipoCarrito = 'venta';
 $seccion = 'ventas';
-$migas = 'Ventas / Carrito de compras';
-$tablas = true;
+$migas = 'Ventas / Carrito';
 require __DIR__ . '/../layout/cabecera.php';
+include __DIR__ . '/../comun/carrito.php';
+require __DIR__ . '/../layout/pie.php';
 ?>
-            
-            <div class="page-content">
-<?php $modifica = $_SESSION['modifica_venta'] ?? null; if ($modifica) { include __DIR__ . '/aviso_modificacion.php'; } ?>
-            
-            <div class="records table-responsive">
-                     
-                    <div>
-                    
-
-    <table width="100%" id="example">
-        <thead>
-            <tr>
-            
-            <th><span class="las la-sort"></span>Código</th>
-            <th><span class="las la-sort"></span>Producto</th>
-            <th><span class="las la-sort"></span>Precio</th>
-            <th><span class="las la-sort"></span>Stock</th>
-            <th><span class="las la-sort"></span>Cantidad</th>
-            <th><span class="las la-sort"></span>Subtotal</th>
-            <th><span class="las la-sort"></span></th>
-        </tr>
-        </thead>
-        <tbody>
-        <?php 
-require '../../backend/config/Conexion.php';
-$grand_total = 0;
-// solo el carrito del usuario, con el precio guardado al agregar
-$select_cart = $connect->prepare("SELECT cart.idv, productos.stock, productos.idprod, productos.codpro, productos.nomprd, cart.name, cart.price, cart.quantity FROM cart INNER JOIN productos ON cart.idprod = productos.idprod WHERE cart.user_id = ?");
- $select_cart->execute([$_SESSION['id']]);
- if($select_cart->rowCount() > 0){
-         while($fetch_cart = $select_cart->fetch(PDO::FETCH_ASSOC)){ 
-     ?>
-     <tr>
-   
-         <td><h4><?php echo e($fetch_cart['codpro']); ?></h4></td>
-         <td><h4><?php echo e($fetch_cart['nomprd']); ?></h4></td>
-         <td><h4>S/<?php echo number_format($fetch_cart['price'],2) ?></h4></td>
-         <td><h4><?php echo e($fetch_cart['stock']); ?></h4></td>
-        <td>
-    <form action="" method="POST">
-<?php echo csrf_campo(); ?>
-        <div class="form-group">
-            <input type="hidden" name="prdt" value="<?php echo e($fetch_cart['idv']); ?>">
-                <input type="number" name="p_qty" value="<?php echo e($fetch_cart['quantity']); ?>" style="width:100px;" min="1" max="99" class="form-control" placeholder="Cantidad">
-        </div>
-    <button type="submit" name="update_qty" class="btn-icono" title="Actualizar cantidad"><span class="las la-sync"></span></button>
-    </form>    
-        </td>
-        <td><h4>S/<?= number_format($sub_total = ($fetch_cart['price'] * $fetch_cart['quantity']),2); ?></h4></td>
-    <td style="width:260px;">
-    <a title="Eliminar" onclick="return confirm('Eliminar del carrito?');" href="../ventas/eliminar.php?id=<?php echo e($fetch_cart['idv']); ?>" class="btn-icono peligro"><span class="las la-trash-alt"></span></a>                            
-    </td>
-     </tr>
-     <?php
-      $grand_total += $sub_total;
-      }
-   }else{
-      echo '<p class="alert alert-warning">Tu carrito esta vació</p>';
-   }
-   ?>
-        </tbody>
-    </table>
-     <h1 style="font-size:42px; color:#000000;">Precio Total: S/<?php echo number_format($grand_total, 2); ?>
-                    </div>
-
-
-                    <div>
-                        <button  onclick="location.href='nuevo.php'" class="registerbtn">CONTINUAR COMPRANDO </button>
-                       
-                        <button class="pabtn <?= ($grand_total > 1)?'':'disabled'; ?>" onclick="location.href='checkout.php'">PROCEDER PAGO</button>
-                    </div>
-
-                </div>
-            
-            </div>
-            
-<?php require __DIR__ . '/../layout/pie.php'; ?>
-   <?php include_once '../../backend/php/upd_cart.php' ?>
+    <?php include_once '../../backend/php/upd_cart.php' ?>
+    <script type="text/javascript" src="../../backend/js/reenvio.js"></script>
 </body>
 </html>

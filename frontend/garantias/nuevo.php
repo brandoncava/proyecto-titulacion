@@ -77,12 +77,24 @@ require __DIR__ . '/../layout/cabecera.php';
             <div class="page-content">
 
 <?php if (!$venta && !$manual): ?>
-                <form class="filtros" method="GET" action="">
-                    <label style="flex:1">Buscar la venta original
-                        <input type="text" name="q" value="<?php echo e($q); ?>" placeholder="Comprobante (ej. B001-5), DNI/RUC o nombre del cliente" style="min-width:320px" autofocus>
-                    </label>
-                    <button type="submit">Buscar</button>
-                    <span class="atajos"><a href="?manual=1">La venta no está en el sistema</a></span>
+                <div class="cabecera-form">
+                    <div>
+                        <h1>Nueva orden de garantía</h1>
+                        <p>Busca la venta original para traer el cliente, el producto y la fecha de compra</p>
+                    </div>
+                    <div class="cabecera-form-botones">
+                        <a href="mostrar.php" class="btn-secundario">Cancelar</a>
+                        <a href="?manual=1" class="btn-secundario">La venta no está en el sistema</a>
+                    </div>
+                </div>
+
+                <form class="tarjeta-form buscar-venta" method="GET" action="">
+                    <label for="q">Buscar la venta original</label>
+                    <div class="buscador-cliente">
+                        <span class="las la-search"></span>
+                        <input type="text" id="q" name="q" value="<?php echo e($q); ?>" placeholder="Comprobante (ej. B001-5), DNI/RUC o nombre del cliente" autofocus>
+                    </div>
+                    <button type="submit" class="btn-primario">Buscar</button>
                 </form>
 
 <?php if ($q !== ''): ?>
@@ -98,7 +110,7 @@ require __DIR__ . '/../layout/cabecera.php';
                                 <td><?php echo date('d/m/Y', strtotime($r->placed_on)); ?></td>
                                 <td><?php echo e($r->nomcl); ?> <small><?php echo e($r->doc_num); ?></small></td>
                                 <td>S/<?php echo number_format($r->total_price, 2); ?></td>
-                                <td><a class="boton-elegir" href="?idord=<?php echo (int)$r->idord; ?>">Elegir</a></td>
+                                <td><a class="btn-secundario btn-chico" href="?idord=<?php echo (int)$r->idord; ?>">Elegir</a></td>
                             </tr>
 <?php endforeach; ?>
                         </tbody>
@@ -110,76 +122,103 @@ require __DIR__ . '/../layout/cabecera.php';
 <?php endif; ?>
 
 <?php else: ?>
-<form action="" method="POST" autocomplete="off" id="form-garantia">
-<?php echo csrf_campo(); ?>
-  <div class="containerss">
-    <h1>Orden de recepción por garantía</h1>
-    <p><a href="nuevo.php">&larr; Buscar otra venta</a></p>
-    <hr>
+<?php
+$cabecera = [
+    'titulo'    => 'Orden de recepción por garantía',
+    'subtitulo' => $venta ? 'Venta original: ' . $venta->tipc . ' ' . formato_comprobante($venta->serie, $venta->numero) . ' del ' . date('d/m/Y', strtotime($venta->placed_on))
+                          : 'Producto vendido fuera del sistema',
+    'form'      => 'form-garantia',
+    'boton'     => 'ins_garantia',
+    'texto'     => 'Registrar orden',
+    'volver'    => 'nuevo.php',
+];
+include __DIR__ . '/../layout/cabecera_form.php';
+?>
 
+                <form action="" method="POST" autocomplete="off" id="form-garantia" class="tarjetas-form">
+                    <?php echo csrf_campo(); ?>
 <?php if ($venta): ?>
-    <input type="hidden" name="idord" value="<?php echo (int)$venta->idord; ?>">
-    <p class="dato-venta">
-        Venta original: <b><?php echo e($venta->tipc . ' ' . formato_comprobante($venta->serie, $venta->numero)); ?></b>
-        del <?php echo date('d/m/Y', strtotime($venta->placed_on)); ?>
-    </p>
+                    <input type="hidden" name="idord" value="<?php echo (int)$venta->idord; ?>">
 <?php endif; ?>
 
+                    <section class="tarjeta-form">
+                        <h2><span class="las la-box"></span> Producto</h2>
 <?php if ($lineas): ?>
-    <label><b>Producto que falla</b></label><span class="badge-warning">*</span>
-    <div class="lista-productos-gar">
+                        <span class="etiqueta-campo">Producto que falla <span class="req">*</span></span>
+                        <div class="lista-productos-gar">
 <?php foreach ($lineas as $i => $x): ?>
-        <label class="opcion-producto">
-            <input type="radio" name="idprod" value="<?php echo (int)$x->idprod; ?>" data-vigente="<?php echo $x->vigente ? 1 : 0; ?>" <?php echo $i === 0 ? 'checked' : ''; ?> required>
-            <span><?php echo e($x->nombre); ?></span>
-            <span class="estado-gar <?php echo $x->vigente ? 'vigente' : 'vencida'; ?>">
-                <?php echo $x->vigente ? 'Garantía vigente' : 'Garantía vencida'; ?> hasta <?php echo date('d/m/Y', strtotime($x->vence)); ?>
-            </span>
-        </label>
+                            <label class="opcion-producto">
+                                <input type="radio" name="idprod" value="<?php echo (int)$x->idprod; ?>" data-vigente="<?php echo $x->vigente ? 1 : 0; ?>" <?php echo $i === 0 ? 'checked' : ''; ?> required>
+                                <span><?php echo e($x->nombre); ?></span>
+                                <span class="chip <?php echo $x->vigente ? 'ok' : 'peligro'; ?>">
+                                    <?php echo $x->vigente ? 'Vigente' : 'Vencida'; ?> hasta <?php echo date('d/m/Y', strtotime($x->vence)); ?>
+                                </span>
+                            </label>
 <?php endforeach; ?>
-    </div>
+                        </div>
 <?php else: ?>
-    <label for="idprod"><b>Producto que falla</b></label><span class="badge-warning">*</span>
-    <select name="idprod" id="idprod" required>
-        <option value="">Seleccione</option>
+                        <label for="idprod">Producto que falla <span class="req">*</span></label>
+                        <select name="idprod" id="idprod" required>
+                            <option value="">Seleccione</option>
 <?php foreach ($productos as $p): ?>
-        <option value="<?php echo (int)$p->idprod; ?>" data-meses="<?php echo (int)$p->garantia_meses; ?>"><?php echo e($p->nomprd); ?> (<?php echo (int)$p->garantia_meses; ?> meses)</option>
+                            <option value="<?php echo (int)$p->idprod; ?>" data-meses="<?php echo (int)$p->garantia_meses; ?>"><?php echo e($p->nomprd); ?> (<?php echo (int)$p->garantia_meses; ?> meses)</option>
 <?php endforeach; ?>
-    </select>
+                        </select>
 <?php if (!$venta): ?>
-    <label for="fecha_compra"><b>Fecha de compra</b></label><span class="badge-warning">*</span>
-    <input type="date" name="fecha_compra" id="fecha_compra" max="<?php echo $hoy; ?>" required>
-    <label for="comprobante"><b>Comprobante de la compra</b></label>
-    <input type="text" name="comprobante" id="comprobante" maxlength="20" placeholder="ej. B001-00000123 (si el cliente lo tiene)">
+                        <div class="fila-campos">
+                            <div>
+                                <label for="fecha_compra">Fecha de compra <span class="req">*</span></label>
+                                <input type="date" name="fecha_compra" id="fecha_compra" max="<?php echo $hoy; ?>" required>
+                            </div>
+                            <div>
+                                <label for="comprobante">Comprobante</label>
+                                <input type="text" name="comprobante" id="comprobante" maxlength="20" class="mayusculas" placeholder="ej. B001-00000123">
+                            </div>
+                        </div>
 <?php endif; ?>
-    <p id="vigencia-manual" class="estado-pagos"></p>
+                        <p id="vigencia-manual" class="estado-pagos"></p>
 <?php endif; ?>
+                        <label for="numero_serie">N° de serie del equipo</label>
+                        <input type="text" name="numero_serie" id="numero_serie" maxlength="60" placeholder="Lo indica la etiqueta del equipo">
+                    </section>
 
-    <label for="cliente_nombre"><b>Cliente</b></label><span class="badge-warning">*</span>
-    <input type="text" name="cliente_nombre" id="cliente_nombre" maxlength="150" required value="<?php echo e($venta && $venta->nomcl !== 'CLIENTES VARIOS' ? $venta->nomcl : ''); ?>" placeholder="Nombre o razón social">
-    <label for="cliente_doc"><b>DNI o RUC</b></label>
-    <input type="text" name="cliente_doc" id="cliente_doc" maxlength="11" inputmode="numeric" value="<?php echo e($venta->doc_num ?? ''); ?>" placeholder="8 u 11 dígitos">
-    <label for="cliente_tel"><b>Teléfono de contacto</b></label>
-    <input type="text" name="cliente_tel" id="cliente_tel" maxlength="15" inputmode="tel" value="<?php echo e($venta->telfcl ?? ''); ?>" placeholder="Para avisarle cuando esté listo">
+                    <section class="tarjeta-form">
+                        <h2><span class="las la-user"></span> Cliente</h2>
+                        <label for="cliente_nombre">Nombre o razón social <span class="req">*</span></label>
+                        <input type="text" name="cliente_nombre" id="cliente_nombre" maxlength="150" required value="<?php echo e($venta && $venta->nomcl !== 'CLIENTES VARIOS' ? $venta->nomcl : ''); ?>" placeholder="ej. Rosa María Medina Paz">
+                        <div class="fila-campos">
+                            <div>
+                                <label for="cliente_doc">DNI o RUC</label>
+                                <input type="text" name="cliente_doc" id="cliente_doc" maxlength="11" inputmode="numeric" value="<?php echo e($venta->doc_num ?? ''); ?>" placeholder="8 u 11 dígitos">
+                            </div>
+                            <div>
+                                <label for="cliente_tel">Teléfono</label>
+                                <input type="text" name="cliente_tel" id="cliente_tel" maxlength="15" inputmode="tel" value="<?php echo e($venta->telfcl ?? ''); ?>" placeholder="Para avisarle">
+                            </div>
+                        </div>
+                    </section>
 
-    <label for="numero_serie"><b>N° de serie del equipo</b></label>
-    <input type="text" name="numero_serie" id="numero_serie" maxlength="60" placeholder="Lo indica la etiqueta del equipo">
-    <label for="estado_fisico"><b>Estado físico</b></label><span class="badge-warning">*</span>
-    <input type="text" name="estado_fisico" id="estado_fisico" maxlength="255" required placeholder="ej. rayones leves en la tapa, caja completa">
-    <label for="accesorios"><b>Accesorios que deja</b></label>
-    <input type="text" name="accesorios" id="accesorios" maxlength="255" placeholder="ej. cargador original, caja, manual">
-    <label for="falla"><b>Falla reportada por el cliente</b></label><span class="badge-warning">*</span>
-    <textarea name="falla" id="falla" required maxlength="2000" style="height:110px" placeholder="Describe la falla con las palabras del cliente"></textarea>
+                    <section class="tarjeta-form ancho-completo">
+                        <h2><span class="las la-clipboard-check"></span> Recepción del equipo</h2>
+                        <div class="fila-campos">
+                            <div>
+                                <label for="estado_fisico">Estado físico <span class="req">*</span></label>
+                                <input type="text" name="estado_fisico" id="estado_fisico" maxlength="255" required placeholder="ej. rayones leves en la tapa, caja completa">
+                            </div>
+                            <div>
+                                <label for="accesorios">Accesorios que deja</label>
+                                <input type="text" name="accesorios" id="accesorios" maxlength="255" placeholder="ej. cable de poder, cable USB">
+                            </div>
+                        </div>
+                        <label for="falla">Falla reportada por el cliente <span class="req">*</span></label>
+                        <textarea name="falla" id="falla" required maxlength="2000" placeholder="Describe la falla con las palabras del cliente"></textarea>
 
-    <label class="check-fuera" id="check-fuera" hidden>
-        <input type="checkbox" name="fuera_garantia" value="1">
-        La garantía está vencida: registrar la orden de todas formas (la marca podría rechazarla o cobrar la reparación)
-    </label>
-
-    <hr>
-    <button type="submit" name="ins_garantia" class="registerbtn">Registrar orden</button>
-  </div>
-</form>
+                        <label class="check-fuera" id="check-fuera" hidden>
+                            <input type="checkbox" name="fuera_garantia" value="1">
+                            La garantía está vencida: registrar la orden de todas formas (la marca podría rechazarla o cobrar la reparación)
+                        </label>
+                    </section>
+                </form>
 <?php endif; ?>
 
             </div>

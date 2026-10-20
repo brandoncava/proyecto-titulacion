@@ -16,7 +16,7 @@ require __DIR__ . '/../layout/cabecera.php';
                      <div class="record-header">
                         <div class="add">
                           
-                            <button style="cursor: pointer;" onclick="location.href='nuevo.php'">Nuevo</button>
+                            <a href="nuevo.php" class="btn-primario btn-nuevo"><span class="las la-plus"></span> Nuevo</a>
                         </div>
                     </div>
                     <div>
@@ -66,15 +66,13 @@ if($sentencia){
                                     <td><h4><?php echo e($d->nocate); ?></h4></td>
                                     <td><h4>S/<?php echo number_format($d->precio,2) ?></h4></td>
                                     <td>
-                                      <?php 
-                                     if ($d->stock < 11) {
-                                        echo '<span class="badge">Se esta agotando</span>';
-                                     }else{
-                                       echo '<h4>'.$d->stock.'</h4>';
-                                       
-                                     }
-
-                                     ?>  
+                                        <h4><?php echo (int)$d->stock; ?>
+<?php if ((int)$d->stock <= 0): ?>
+                                            <span class="chip peligro">Sin stock</span>
+<?php elseif ((int)$d->stock <= STOCK_BAJO): ?>
+                                            <span class="chip alerta">Stock bajo</span>
+<?php endif; ?>
+                                        </h4>
                                     </td>
                                     
 
@@ -99,10 +97,7 @@ if($sentencia){
                             </tbody>
                         </table>
                           <?php else:?>
-                           <div class="alert">
-      <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span> 
-      <strong>Danger!</strong> No hay datos.
-    </div>
+                           <p class="sin-datos">Todavía no hay registros.</p>
     <?php endif; ?>
                     </div>
 

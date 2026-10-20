@@ -16,7 +16,7 @@ require __DIR__ . '/../layout/cabecera.php';
                      <div class="record-header">
                         <div class="add">
                           
-                            <button style="cursor: pointer;" onclick="location.href='nuevo.php'">Nuevo</button>
+                            <a href="nuevo.php" class="btn-primario btn-nuevo"><span class="las la-plus"></span> Nuevo</a>
                         </div>
                     </div>
                     <div>
@@ -48,7 +48,7 @@ if($sentencia){
                             </thead>
                             <tbody>
                                 <?php foreach($data as $d):?>
-                                <tr>
+                                <tr<?php if ((int)$d->anulada === 1) echo ' class="fila-anulada"'; ?>>
                                     <td><?php echo e($d->idordpur); ?></td>
                                     <td><h4><?php echo e($d->tipc); ?></h4>
                                         <small><?php echo !empty($d->serie_doc) ? e($d->serie_doc . '-' . $d->numero_doc) : ''; ?></small></td>
@@ -68,14 +68,14 @@ if($sentencia){
             
             <a title="Comprobante" href="comprobante.php?id=<?php echo e($d->idordpur); ?>" class="btn-icono"><span class="las la-file-alt"></span></a>
             <?php if ((int)$d->anulada === 1): ?>
-                <span style="color:#B42318;font-weight:bold;margin-left:6px;">ANULADA</span>
+                <span class="chip peligro">ANULADA</span>
             <?php elseif (puede('compras_anular')): ?>
-                <form method="POST" action="" style="display:inline" onsubmit="return confirm('¿Modificar esta compra? Sus productos se cargarán en el carrito de compras para editarlos.');">
+                <form method="POST" action="" onsubmit="return confirm('¿Modificar esta compra? Sus productos se cargarán en el carrito de compras para editarlos.');">
                     <?php echo csrf_campo(); ?>
                     <input type="hidden" name="idordpur" value="<?php echo e($d->idordpur); ?>">
                     <button type="submit" name="modificar_compra" title="Modificar compra" class="btn-icono"><span class="las la-pen"></span></button>
                 </form>
-                <form method="POST" action="" style="display:inline" onsubmit="return anularCompra(this);">
+                <form method="POST" action="" onsubmit="return anularCompra(this);">
                     <?php echo csrf_campo(); ?>
                     <input type="hidden" name="idordpur" value="<?php echo e($d->idordpur); ?>">
                     <input type="hidden" name="motivo" value="">
@@ -93,10 +93,7 @@ if($sentencia){
                             </tbody>
                         </table>
                           <?php else:?>
-                           <div class="alert">
-      <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span> 
-      <strong>Danger!</strong> No hay datos.
-    </div>
+                           <p class="sin-datos">Todavía no hay registros.</p>
     <?php endif; ?>
                     </div>
 

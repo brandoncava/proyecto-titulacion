@@ -35,16 +35,5 @@ if (isset($_POST['add_to_cart_purchase'])) {
         return;
     }
 
-    $repetido = $connect->prepare('SELECT 1 FROM cart_purchase WHERE idprod = ? AND user_id = ?');
-    $repetido->execute([$idprod, $user_id]);
-
-    if ($repetido->fetch()) {
-        avisar_y_redirigir('Error!', 'Ya está agregado. Cambia la cantidad desde el carrito.', 'error', 'cart.php');
-        return;
-    }
-
-    $insertar = $connect->prepare('INSERT INTO cart_purchase (user_id, idprod, name, price, quantity) VALUES (?, ?, ?, ?, ?)');
-    $insertar->execute([$user_id, $idprod, $producto->nomprd, $cost, $quantity]);
-
-    avisar_y_redirigir('¡Registrado!', 'Agregado correctamente', 'success', 'cart.php');
+    carrito_agregar($connect, 'compra', $user_id, $idprod, $producto->nomprd, $cost, $quantity);
 }

@@ -8,35 +8,43 @@ if (isset($_POST['upd_customer'])) {
 
     csrf_validar();
 
-    $idcli  = filter_input(INPUT_POST, 'clid', FILTER_VALIDATE_INT);
-    $tipd   = trim($_POST['tipcl'] ?? '');
-    $nudoc  = trim($_POST['numcl'] ?? '');
-    $nocl   = trim($_POST['namcl'] ?? '');
-    $apcl   = trim($_POST['apecl'] ?? '');
-    $telfcl = trim($_POST['telcl'] ?? '');
+    $idcli  = filter_input(INPUT_POST, 'clid', FILTER_VALIDATE_INT) ?: 0;
+    $volver = '../clientes/editar.php?id=' . $idcli;
 
-    $tipd = strtoupper($tipd);
-
-    if (!$idcli || $tipd === '' || $nudoc === '') {
-        avisar_y_redirigir('Error!', 'Completa el tipo y número de documento.', 'error', '../clientes/editar.php?id=' . (int)$idcli);
+    $datos = leer_datos_cliente($error);
+    if (!$idcli || $datos === null) {
+        avisar_y_redirigir('Revisa los datos', $error ?: 'Cliente no válido.', 'warning', $volver);
         return;
     }
+    [$tipd, $nudoc, $nocl, $apcl, $telfcl, $email, $promos] = $datos;
 
-    if (($tipd === 'DNI' && !validar_dni($nudoc)) || ($tipd === 'RUC' && !validar_ruc($nudoc)) || ($tipd !== 'DNI' && $tipd !== 'RUC')) {
-        avisar_y_redirigir('Error!', 'Documento no válido: DNI de 8 dígitos o RUC de 11 con dígito verificador correcto.', 'error', '../clientes/editar.php?id=' . (int)$idcli);
+    // el documento o telefono no pueden ser de otro cliente
+    $consulta = 'SELECT 1 FROM clientes WHERE idcli <> ? AND (nudoc = ?';
+    $params = [$idcli, $nudoc];
+    if ($telfcl !== '') {
+        $consulta .= ' OR telfcl = ?';
+        $params[] = $telfcl;
+    }
+    $repetido = $connect->prepare($consulta . ') LIMIT 1');
+    $repetido->execute($params);
+    if ($repetido->fetch()) {
+        avisar_y_redirigir('Cliente repetido', 'Ese documento o teléfono ya pertenece a otro cliente.', 'warning', $volver);
         return;
     }
 
     try {
-        $sql = $connect->prepare(
-            'UPDATE clientes SET tipd = ?, nudoc = ?, nocl = ?, apcl = ?, telfcl = ? WHERE idcli = ? LIMIT 1'
-        );
-        $sql->execute([$tipd, $nudoc, $nocl, $apcl, $telfcl, $idcli]);
+        // la fecha de la autorizacion se conserva si ya habia aceptado; va antes de
+        // acepta_promos porque mysql asigna en orden y aqui se lee el valor anterior
+        $connect->prepare('UPDATE clientes SET tipd = ?, nudoc = ?, nocl = ?, apcl = ?, telfcl = ?, emailcl = ?,
+                                  acepta_promos_on = IF(? = 1, IF(acepta_promos = 1, acepta_promos_on, NOW()), NULL),
+                                  acepta_promos = ?
+                            WHERE idcli = ? LIMIT 1')
+                ->execute([$tipd, $nudoc, $nocl, $apcl, $telfcl, $email, $promos, $promos, $idcli]);
 
         avisar_y_redirigir('Actualizado!', 'Se actualizó correctamente', 'success', '../clientes/mostrar.php');
 
     } catch (PDOException $e) {
         error_log('Error al actualizar el cliente: ' . $e->getMessage());
-        avisar_y_redirigir('Error!', 'No se pudo actualizar el cliente. Comuníquese con el administrador.', 'error', '../clientes/mostrar.php');
+        avisar_y_redirigir('Error!', 'No se pudo actualizar el cliente. Comuníquese con el administrador.', 'error', $volver);
     }
 }

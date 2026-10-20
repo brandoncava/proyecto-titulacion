@@ -35,7 +35,6 @@ $MENU = [
     <link rel="stylesheet" href="../../backend/css/admin.css">
     <link rel="icon" type="image/svg+xml" href="../../backend/img/ck-icono.svg">
     <link rel="stylesheet" href="https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css">
-    <link rel="stylesheet" type="text/css" href="../../backend/css/font.css">
 <?php if ($tablas): ?>
     <link rel="stylesheet" type="text/css" href="../../backend/css/datatable.css">
     <link rel="stylesheet" type="text/css" href="../../backend/css/buttonsdataTables.css">

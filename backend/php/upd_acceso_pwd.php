@@ -4,50 +4,29 @@ require_once __DIR__ . '/../config/Conexion.php';
 
 requiere_permiso_api('usuarios');
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (isset($_POST['upd_acceso_pwd'])) {
+
     csrf_validar();
-}
-if(isset($_POST['upd_acceso_pwd']))
-{
-    $id = $_POST['useid'];
-    $password = password_hash($_POST['pswuse'], PASSWORD_DEFAULT);
-    
-    
+
+    $id       = filter_input(INPUT_POST, 'useid', FILTER_VALIDATE_INT);
+    $password = (string)($_POST['pswuse'] ?? '');
+    $volver   = '../accesos/cambiar.php?id=' . (int)$id;
+
+    if (!$id) {
+        avisar_y_redirigir('Error!', 'Usuario no válido.', 'error', '../accesos/mostrar.php');
+        return;
+    }
+    if (strlen($password) < 6) {
+        avisar_y_redirigir('Revisa los datos', 'La contraseña debe tener como mínimo 6 caracteres.', 'warning', $volver);
+        return;
+    }
+
     try {
-
-        $query = "UPDATE usuarios SET password=:password WHERE id=:id LIMIT 1";
-        $statement = $connect->prepare($query);
-
-        $data = [
-            ':password' => $password,
-            ':id' => $id
-        ];
-        $query_execute = $statement->execute($data);
-
-        if($query_execute)
-        {
-            echo '<script type="text/javascript">
-swal("¡Actualizado!", "Contraseña actualizada correctamente", "success").then(function() {
-            window.location = "../accesos/mostrar.php";
-        });
-        </script>';
-            exit(0);
-        }
-        else
-        {
-           echo '<script type="text/javascript">
-swal("Error!", "No se pueden agregar datos,  comuníquese con el administrador ", "error").then(function() {
-            window.location = "../accesos/mostrar.php";
-        });
-        </script>';
-            exit(0);
-        }
-
+        $connect->prepare('UPDATE usuarios SET password = ? WHERE id = ? LIMIT 1')
+                ->execute([password_hash($password, PASSWORD_DEFAULT), $id]);
+        avisar_y_redirigir('¡Actualizado!', 'Contraseña actualizada correctamente.', 'success', '../accesos/mostrar.php');
     } catch (PDOException $e) {
-        echo $e->getMessage();
+        error_log('Error al cambiar la contraseña: ' . $e->getMessage());
+        avisar_y_redirigir('Error!', 'No se pudo cambiar la contraseña. Comuníquese con el administrador.', 'error', $volver);
     }
 }
-?>
-
-
-

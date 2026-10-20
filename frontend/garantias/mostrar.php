@@ -52,7 +52,7 @@ require __DIR__ . '/../layout/cabecera.php';
             <div class="records table-responsive">
                 <div class="record-header">
                     <div class="add">
-                        <button style="cursor: pointer;" onclick="location.href='nuevo.php'">Nueva orden de garantía</button>
+                        <a href="nuevo.php" class="btn-primario btn-nuevo"><span class="las la-plus"></span> Nueva orden de garantía</a>
                     </div>
                 </div>
                 <div>
@@ -83,14 +83,14 @@ require __DIR__ . '/../layout/cabecera.php';
                                 <td><?php echo e($g->comprobante ?: '—'); ?></td>
                                 <td>
 <?php if ((int)$g->vigente === 1): ?>
-                                    <span class="estado-gar vigente">Vigente</span>
+                                    <span class="chip ok">Vigente</span>
 <?php else: ?>
-                                    <span class="estado-gar vencida">Vencida</span>
+                                    <span class="chip peligro">Vencida</span>
 <?php endif; ?>
                                     <small>hasta <?php echo date('d/m/Y', strtotime($g->vence)); ?></small>
                                 </td>
                                 <td>
-                                    <span class="estado-gar e-<?php echo e(strtolower(str_replace(' ', '-', $g->estado))); ?>"><?php echo e(GARANTIA_ESTADOS[$g->estado] ?? $g->estado); ?></span>
+                                    <span class="chip <?php echo GARANTIA_CHIP[$g->estado] ?? ''; ?>"><?php echo e(GARANTIA_ESTADOS[$g->estado] ?? $g->estado); ?></span>
 <?php if ($g->resultado): ?>
                                     <small><?php echo e($g->resultado); ?></small>
 <?php endif; ?>

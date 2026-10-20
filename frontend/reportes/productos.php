@@ -8,7 +8,6 @@ require '../../backend/config/Conexion.php';
 require __DIR__ . '/comun.php';
 
 // stock bajo: igual o menos de estas unidades
-const STOCK_BAJO = 5;
 
 $categorias = ['' => 'Todas'];
 foreach ($connect->query('SELECT idcate, nocate FROM categoria WHERE state = 1 ORDER BY nocate') as $c) {
@@ -180,7 +179,7 @@ require __DIR__ . '/../layout/cabecera.php';
                                     <td><?php echo e($p->nomprd); ?></td>
                                     <td><?php echo e($p->nocate); ?></td>
                                     <td><?php echo e($p->nomarc); ?></td>
-                                    <td data-order="<?php echo (int)$p->stock; ?>"><?php echo (int)$p->stock; ?><?php echo (int)$p->stock <= STOCK_BAJO ? ' <span class="estado-anulada">bajo</span>' : ''; ?></td>
+                                    <td data-order="<?php echo (int)$p->stock; ?>"><?php echo (int)$p->stock; ?><?php echo (int)$p->stock <= STOCK_BAJO ? ' <span class="chip alerta">bajo</span>' : ''; ?></td>
                                     <td data-order="<?php echo e($p->precio_compra); ?>"><?php echo $p->precio_compra > 0 ? 'S/' . number_format($p->precio_compra, 2) : '—'; ?></td>
                                     <td data-order="<?php echo e($p->precio); ?>">S/<?php echo number_format($p->precio, 2); ?></td>
                                     <td data-order="<?php echo $p->margen ?? -999; ?>"><?php echo $p->margen !== null ? $p->margen . '%' : '—'; ?></td>

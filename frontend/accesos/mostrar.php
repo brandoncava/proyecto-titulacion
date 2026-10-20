@@ -15,7 +15,7 @@ require __DIR__ . '/../layout/cabecera.php';
             <div class="records table-responsive">
                     <div class="record-header">
                         <div class="add">
-                            <button style="cursor: pointer;" onclick="location.href='nuevo.php'">Nuevo</button>
+                            <a href="nuevo.php" class="btn-primario btn-nuevo"><span class="las la-plus"></span> Nuevo</a>
                         </div>
                     </div>
                     <div>
@@ -69,10 +69,7 @@ if($sentencia){
                             </tbody>
                         </table>
                           <?php else:?>
-                           <div class="alert">
-      <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span> 
-      <strong>Danger!</strong> No hay datos.
-    </div>
+                           <p class="sin-datos">Todavía no hay registros.</p>
     <?php endif; ?>
                     </div>
 

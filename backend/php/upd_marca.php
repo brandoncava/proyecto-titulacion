@@ -9,7 +9,7 @@ if (isset($_POST['upd_marca'])) {
     csrf_validar();
 
     $idmar  = filter_input(INPUT_POST, 'idmar', FILTER_VALIDATE_INT);
-    $nombre = trim($_POST['nommar'] ?? '');
+    $nombre = mb_substr(trim($_POST['nommar'] ?? ''), 0, 100);
 
     if (!$idmar || $nombre === '') {
         avisar_y_redirigir('Error!', 'Escribe el nombre de la marca.', 'error', '../marcas/mostrar.php');

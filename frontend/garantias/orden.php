@@ -1,7 +1,7 @@
 <?php
 // PDF de la orden de recepcion por garantia (copia para el cliente)
-require('../../backend/fpdf/fpdf.php');
 require_once __DIR__ . '/../../backend/config/auth.php';
+require_once __DIR__ . '/../../backend/config/pdf.php';
 require '../../backend/config/Conexion.php';
 
 requiere_permiso('garantias');
@@ -22,21 +22,8 @@ if (!$g) {
     die('No se encontro la orden de garantia.');
 }
 
-// FPDF trabaja en latin1
-function t($texto)
+class OrdenGarantia extends PdfCk
 {
-    return mb_convert_encoding((string)$texto, 'ISO-8859-1', 'UTF-8');
-}
-
-class OrdenGarantia extends FPDF
-{
-    function Footer()
-    {
-        $this->SetY(-15);
-        $this->SetFont('Arial', 'I', 8);
-        $this->Cell(0, 5, t('CK Computers - Orden de garantía. Conserve este documento para recoger su producto.'), 0, 1, 'C');
-    }
-
     // titulo de seccion con fondo gris
     function Seccion($titulo)
     {
@@ -44,7 +31,7 @@ class OrdenGarantia extends FPDF
         $this->SetFont('Arial', 'B', 10);
         $this->SetFillColor(108, 43, 217);
         $this->SetTextColor(255, 255, 255);
-        $this->Cell(180, 7, t($titulo), 0, 1, 'L', true);
+        $this->Cell(180, 7, pdf_txt($titulo), 0, 1, 'L', true);
         $this->SetTextColor(0, 0, 0);
         $this->Ln(1);
     }
@@ -52,28 +39,27 @@ class OrdenGarantia extends FPDF
     function Dato($etiqueta, $valor)
     {
         $this->SetFont('Arial', 'B', 9);
-        $this->Cell(45, 6, t($etiqueta), 0, 0);
+        $this->Cell(45, 6, pdf_txt($etiqueta), 0, 0);
         $this->SetFont('Arial', '', 9);
-        $this->MultiCell(135, 6, t($valor !== null && $valor !== '' ? $valor : '-'));
+        $this->MultiCell(135, 6, pdf_txt($valor !== null && $valor !== '' ? $valor : '-'));
     }
 }
 
-$pdf = new OrdenGarantia('P', 'mm', 'A4');
-$pdf->SetMargins(15, 15, 15);
-$pdf->SetAutoPageBreak(true, 20);
+$pdf = new OrdenGarantia();
+$pdf->pie = EMPRESA['nombre'] . ' - Orden de garantía. Conserve este documento para recoger su producto.';
 $pdf->AddPage();
 
 // cabecera: empresa y numero de orden
 $pdf->SetFont('Arial', 'B', 14);
-$pdf->Cell(110, 7, 'CK Computers', 0, 0);
+$pdf->Cell(110, 7, pdf_txt(EMPRESA['nombre']), 0, 0);
 $pdf->SetFont('Arial', 'B', 12);
 $pdf->Cell(70, 7, formato_garantia($g['idgar']), 0, 1, 'R');
 $pdf->SetFont('Arial', '', 9);
-$pdf->Cell(110, 5, t('Trujillo - Stand A 109, ORO AZUL - RUC: 10469119667'), 0, 0);
-$pdf->Cell(70, 5, t('Ingreso: ' . date('d/m/Y H:i', strtotime($g['fecha_ingreso']))), 0, 1, 'R');
+$pdf->Cell(110, 5, pdf_txt(implode(' - ', EMPRESA['direccion']) . ' - RUC: ' . EMPRESA['ruc']), 0, 0);
+$pdf->Cell(70, 5, pdf_txt('Ingreso: ' . date('d/m/Y H:i', strtotime($g['fecha_ingreso']))), 0, 1, 'R');
 $pdf->Ln(4);
 $pdf->SetFont('Arial', 'B', 16);
-$pdf->Cell(180, 9, t('ORDEN DE RECEPCIÓN POR GARANTÍA'), 0, 1, 'C');
+$pdf->Cell(180, 9, pdf_txt('ORDEN DE RECEPCIÓN POR GARANTÍA'), 0, 1, 'C');
 
 $pdf->Seccion('Cliente');
 $pdf->Dato('Nombre:', $g['cliente_nombre']);
@@ -114,7 +100,7 @@ $terminos = [
     'Pasados 90 días desde el aviso de entrega sin que el producto sea recogido, la tienda no se responsabiliza por él.',
 ];
 foreach ($terminos as $i => $texto) {
-    $pdf->MultiCell(180, 4.5, t(($i + 1) . '. ' . $texto));
+    $pdf->MultiCell(180, 4.5, pdf_txt(($i + 1) . '. ' . $texto));
 }
 
 // firmas
@@ -126,6 +112,6 @@ $pdf->SetFont('Arial', '', 9);
 $pdf->SetXY(25, $y + 1);
 $pdf->Cell(60, 5, 'Firma del cliente', 0, 0, 'C');
 $pdf->SetXY(115, $y + 1);
-$pdf->Cell(60, 5, 'Recibido por CK Computers', 0, 1, 'C');
+$pdf->Cell(60, 5, pdf_txt('Recibido por ' . EMPRESA['nombre']), 0, 1, 'C');
 
 $pdf->Output('orden_garantia_' . formato_garantia($g['idgar']) . '.pdf', 'I');

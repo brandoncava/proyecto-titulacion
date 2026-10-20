@@ -3,51 +3,32 @@ require_once __DIR__ . '/../config/auth.php';
 require_once __DIR__ . '/../config/Conexion.php';
 
 requiere_permiso_api('catalogos');
-if(isset($_POST['upd_category']))
-{
+
+if (isset($_POST['upd_category'])) {
 
     csrf_validar();
 
-    $idcate=trim($_POST['cateid']);
-    $nocate=trim($_POST['catnom']);
-   
-    
-    
+    $idcate = filter_input(INPUT_POST, 'cateid', FILTER_VALIDATE_INT);
+    $nocate = mb_substr(trim($_POST['catnom'] ?? ''), 0, 100);
+    $volver = '../categorias/editar.php?id=' . (int)$idcate;
+
+    if (!$idcate || $nocate === '') {
+        avisar_y_redirigir('Error!', 'Escribe el nombre de la categoría.', 'error', $volver);
+        return;
+    }
+
+    $repetida = $connect->prepare('SELECT 1 FROM categoria WHERE nocate = ? AND idcate <> ?');
+    $repetida->execute([$nocate, $idcate]);
+    if ($repetida->fetch()) {
+        avisar_y_redirigir('Error!', 'Ya existe otra categoría con ese nombre.', 'error', $volver);
+        return;
+    }
+
     try {
-
-        $query = "UPDATE categoria SET nocate=:nocate WHERE idcate=:idcate LIMIT 1";
-        $statement = $connect->prepare($query);
-
-        $data = [
-            ':nocate' => $nocate,
-            ':idcate' => $idcate
-        ];
-        $query_execute = $statement->execute($data);
-
-        if($query_execute)
-        {
-            echo '<script type="text/javascript">
-swal("Actualizado!", "Se actualizó correctamente", "success").then(function() {
-            window.location = "../categorias/mostrar.php";
-        });
-        </script>';
-            exit(0);
-        }
-        else
-        {
-           echo '<script type="text/javascript">
-swal("Error!", "No se pueden agregar datos,  comuníquese con el administrador ", "error").then(function() {
-            window.location = "../categorias/nuevo.php";
-        });
-        </script>';
-            exit(0);
-        }
-
+        $connect->prepare('UPDATE categoria SET nocate = ? WHERE idcate = ? LIMIT 1')->execute([$nocate, $idcate]);
+        avisar_y_redirigir('Actualizado!', 'Se actualizó correctamente.', 'success', '../categorias/mostrar.php');
     } catch (PDOException $e) {
-        echo $e->getMessage();
+        error_log('Error al actualizar la categoria: ' . $e->getMessage());
+        avisar_y_redirigir('Error!', 'No se pudo actualizar. Comuníquese con el administrador.', 'error', $volver);
     }
 }
-?>
-
-
-
