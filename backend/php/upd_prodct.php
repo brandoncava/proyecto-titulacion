@@ -41,15 +41,24 @@ if (isset($_POST['upd_prodct'])) {
         return;
     }
 
+    // imagen nueva (opcional): null = no se cambio
+    $foto = guardar_imagen_producto('foto', $errorImagen);
+    if ($foto === false) {
+        avisar_y_redirigir('Error!', $errorImagen, 'error', $volver);
+        return;
+    }
+    $carpeta = __DIR__ . '/../img/subidas/';
+
     try {
         $connect->beginTransaction();
 
-        // stock anterior, para anotar la diferencia en el kardex
-        $anterior = $connect->prepare('SELECT stock FROM productos WHERE idprod = ? FOR UPDATE');
+        // stock y foto anteriores: el stock para anotar la diferencia en el kardex
+        $anterior = $connect->prepare('SELECT stock, foto FROM productos WHERE idprod = ? FOR UPDATE');
         $anterior->execute([$idprod]);
-        $stockAnterior = $anterior->fetchColumn();
-        if ($stockAnterior === false) {
+        $antes = $anterior->fetch();
+        if (!$antes) {
             $connect->rollBack();
+            if ($foto) { @unlink($carpeta . $foto); }
             avisar_y_redirigir('Error!', 'El producto no existe.', 'error', '../productos/mostrar.php');
             return;
         }
@@ -57,21 +66,30 @@ if (isset($_POST['upd_prodct'])) {
         $connect->prepare(
             'UPDATE productos
                 SET codpro = ?, nomprd = ?, desprd = ?, precio = ?, idmar = ?, idcate = ?, modelo = ?, peso = ?,
-                    stock = ?, garantia_meses = ?
+                    stock = ?, garantia_meses = ?, foto = ?
               WHERE idprod = ? LIMIT 1'
-        )->execute([$codpro, $nomprd, $desprd, $precio, $idmar, $idcate, $modelo, $peso, $stock, $garantia, $idprod]);
+        )->execute([$codpro, $nomprd, $desprd, $precio, $idmar, $idcate, $modelo, $peso, $stock, $garantia, $foto ?: $antes->foto, $idprod]);
 
-        if ((int)$stock !== (int)$stockAnterior) {
-            registrar_movimiento($connect, $idprod, (int)$_SESSION['id'], 'Ajuste', (int)$stock - (int)$stockAnterior);
+        if ((int)$stock !== (int)$antes->stock) {
+            registrar_movimiento($connect, $idprod, (int)$_SESSION['id'], 'Ajuste', (int)$stock - (int)$antes->stock);
         }
 
         $connect->commit();
+
+        // la imagen vieja se borra recien cuando el cambio quedo guardado
+        if ($foto && $antes->foto && is_file($carpeta . basename($antes->foto))) {
+            @unlink($carpeta . basename($antes->foto));
+        }
 
         avisar_y_redirigir('Actualizado!', 'Se actualizó correctamente', 'success', '../productos/mostrar.php');
 
     } catch (PDOException $e) {
         if ($connect->inTransaction()) {
             $connect->rollBack();
+        }
+        // si no se guardo, la imagen recien subida sobra
+        if ($foto) {
+            @unlink($carpeta . $foto);
         }
         error_log('Error al actualizar el producto: ' . $e->getMessage());
         avisar_y_redirigir('Error!', 'No se pudo actualizar el producto. Comuníquese con el administrador.', 'error', $volver);

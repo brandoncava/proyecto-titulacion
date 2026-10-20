@@ -4,127 +4,210 @@ require_once __DIR__ . '/../../backend/config/auth.php';
 
 requiere_permiso('productos_ed');
 
+require '../../backend/config/Conexion.php';
+
+$id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT) ?: 0;
+$sentencia = $connect->prepare(
+    'SELECT idprod, codpro, nomprd, desprd, foto, precio, stock, idmar, idcate, modelo, peso, garantia_meses
+       FROM productos WHERE idprod = ?'
+);
+$sentencia->execute([$id]);
+$d = $sentencia->fetch();
+
+$marcas = $categorias = [];
+$foto = null;
+if ($d) {
+    // las activas y la actual del producto aunque este dada de baja; si no, el select
+    // elegiria otra y al guardar el producto cambiaria de marca o categoria sin querer
+    $m = $connect->prepare('SELECT idmar, nomarc, state FROM marca WHERE state = 1 OR idmar = ? ORDER BY nomarc');
+    $m->execute([$d->idmar]);
+    $marcas = $m->fetchAll();
+    $c = $connect->prepare('SELECT idcate, nocate, state FROM categoria WHERE state = 1 OR idcate = ? ORDER BY nocate');
+    $c->execute([$d->idcate]);
+    $categorias = $c->fetchAll();
+
+    // datos de la imagen actual para mostrarlos junto a la vista previa
+    $ruta = __DIR__ . '/../../backend/img/subidas/' . basename((string)$d->foto);
+    if ($d->foto && is_file($ruta)) {
+        $medidas = @getimagesize($ruta);
+        $foto = [
+            'url'    => '../../backend/img/subidas/' . rawurlencode(basename($d->foto)),
+            'nombre' => basename($d->foto),
+            'medidas'=> $medidas ? $medidas[0] . ' × ' . $medidas[1] . ' px' : '',
+            'peso'   => round(filesize($ruta) / 1024) . ' KB',
+        ];
+    }
+}
+
+// meses de garantia sugeridos (se agrega el actual si es otro valor)
+$opcionesGarantia = [0, 3, 6, 12, 18, 24, 36];
+if ($d && !in_array((int)$d->garantia_meses, $opcionesGarantia, true)) {
+    $opcionesGarantia[] = (int)$d->garantia_meses;
+    sort($opcionesGarantia);
+}
+
 $seccion = 'productos';
-$migas = 'Productos / Actualizar';
+$migas = 'Productos / Editar';
 require __DIR__ . '/../layout/cabecera.php';
 ?>
-            
+
             <div class="page-content">
-            <?php 
-require '../../backend/config/Conexion.php';
-$id = filter_input(INPUT_GET, "id", FILTER_VALIDATE_INT) ?: 0;
- $sentencia = $connect->prepare("SELECT productos.idprod,productos.codpro ,productos.nomprd, productos.desprd, productos.foto, productos.precio, productos.stock, marca.idmar, marca.nomarc, categoria.idcate, categoria.nocate,productos.modelo, productos.peso, productos.garantia_meses, productos.state, productos.fere FROM productos INNER JOIN marca ON productos.idmar = marca.idmar INNER JOIN categoria ON productos.idcate = categoria.idcate WHERE idprod = ?");
- $sentencia->execute([$id]);
+<?php if (!$d): ?>
+                <p class="alert alert-warning">No se encontró el producto.</p>
+<?php else: ?>
+                <div class="cabecera-form">
+                    <div>
+                        <h1>Editar producto</h1>
+                        <p>Actualiza la información y controla el inventario</p>
+                    </div>
+                    <div class="cabecera-form-botones">
+                        <a href="mostrar.php" class="btn-secundario">Cancelar</a>
+                        <button type="submit" form="form-producto" name="upd_prodct" class="btn-primario">
+                            <span class="las la-save"></span> Guardar cambios
+                        </button>
+                    </div>
+                </div>
 
-$data =  array();
-if($sentencia){
-  while($r = $sentencia->fetchObject()){
-    $data[] = $r;
-  }
-}
-  ?>
-  <?php if(count($data)>0):?>
-        <?php foreach($data as $d):?>
-<form action="" enctype="multipart/form-data" method="POST"  autocomplete="off">
-<?php echo csrf_campo(); ?>
-  <div class="containerss">
-    <h1>Actualizar producto</h1>
-    <div class="alert-danger">
-  <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span> 
-  <strong>Importante!</strong> Es importante rellenar los campos con &nbsp;<span class="badge-warning">*</span>
-</div>
-    <hr>
-    <br>
-    <label for="email"><b>Código del producto</b></label><span class="badge-warning">*</span>
-    <input type="text" value="<?php echo e($d->codpro); ?>" maxlength="14" onKeypress="if (event.keyCode < 45 || event.keyCode > 57) event.returnValue = false;" placeholder="ejm: 22478754784578" name="prdcod"  required>
+                <form id="form-producto" action="" method="POST" enctype="multipart/form-data" autocomplete="off" class="tarjetas-form">
+                    <?php echo csrf_campo(); ?>
+                    <input type="hidden" name="prdid" value="<?php echo (int)$d->idprod; ?>">
 
-    <input type="hidden" value="<?php echo e($d->idprod); ?>" name="prdid">
+                    <section class="tarjeta-form">
+                        <h2><span class="las la-file-alt"></span> Información general</h2>
 
-    <label for="email"><b>Nombre del producto</b></label><span class="badge-warning">*</span>
-    <input type="text" value="<?php echo e($d->nomprd); ?>" placeholder="ejm: Laptop Lenovo" name="prdnom"  required>
+                        <label for="prdcod">Código del producto <span class="req">*</span></label>
+                        <input type="text" id="prdcod" name="prdcod" value="<?php echo e($d->codpro); ?>" maxlength="14" inputmode="numeric" required>
 
-    <label for="email"><b>Descripción del producto</b></label><span class="badge-warning">*</span>
-    <textarea required value="<?php echo e($d->desprd); ?>" name="prddes" id="consl" required placeholder="Write something.." style="height:200px"><?php echo e($d->desprd); ?></textarea>
+                        <label for="prdnom">Nombre del producto <span class="req">*</span></label>
+                        <input type="text" id="prdnom" name="prdnom" value="<?php echo e($d->nomprd); ?>" maxlength="255" required>
 
-    <label for="email"><b>Precio del producto</b></label><span class="badge-warning">*</span>
-    <input type="text" value="<?php echo e($d->precio); ?>" onKeypress="if (event.keyCode < 45 || event.keyCode > 57) event.returnValue = false;"  placeholder="ejm: 299" name="prdprec"  required>
+                        <label for="prddes">Descripción del producto <span class="req">*</span></label>
+                        <textarea id="prddes" name="prddes" rows="6" maxlength="2000" required><?php echo e($d->desprd); ?></textarea>
+                        <small class="contador"><span id="contador-des">0</span>/2000</small>
+                    </section>
 
-    <label for="prdstock"><b>Stock</b></label><span class="badge-warning">*</span>
-    <input type="number" id="prdstock" name="prdstock" min="0" step="1" value="<?php echo (int)$d->stock; ?>" required>
-    <p class="ayuda-pagos">Si cambias el stock (por un conteo o una merma), la diferencia queda registrada en el kardex como ajuste. Las compras y ventas lo actualizan solas.</p>
-    
-    <label for="psw"><b>Marca del producto</b></label><span class="badge-warning">*</span>
-    <select required name="prdmarc" id="marc">
-        <option value="<?php echo e($d->idmar); ?>"><?php echo e($d->nomarc); ?></option>
-        <option>-------------------Seleccione------------------</option>
+                    <section class="tarjeta-form">
+                        <h2><span class="las la-image"></span> Imagen del producto</h2>
 
-        <?php 
-    $stmt = $connect->prepare('SELECT * FROM marca WHERE state = 1');
-    $stmt->execute();
+                        <div class="imagen-producto">
+                            <div class="imagen-vista">
+<?php if ($foto): ?>
+                                <img id="vista-foto" src="<?php echo e($foto['url']); ?>" alt="Imagen de <?php echo e($d->nomprd); ?>">
+<?php else: ?>
+                                <img id="vista-foto" alt="Sin imagen" hidden>
+                                <span class="las la-image sin-imagen" id="sin-foto"></span>
+<?php endif; ?>
+                            </div>
+                            <div class="imagen-datos">
+                                <b id="foto-titulo"><?php echo $foto ? 'Imagen actual' : 'Sin imagen'; ?></b>
+                                <span id="foto-nombre"><?php echo $foto ? e($foto['nombre']) : ''; ?></span>
+                                <small id="foto-medidas"><?php echo $foto ? e(trim($foto['medidas'] . ' · ' . $foto['peso'], ' ·')) : ''; ?></small>
+                                <label for="foto" class="btn-secundario btn-cambiar-imagen"><span class="las la-sync"></span> Cambiar imagen</label>
+                                <input type="file" id="foto" name="foto" accept="image/jpeg,image/png,image/gif,image/webp" hidden>
+                                <p class="nota"><span class="las la-info-circle"></span> Formato JPG, PNG, GIF o WEBP, con un tamaño máximo de 5 MB. La imagen nueva se guarda al pulsar "Guardar cambios".</p>
+                            </div>
+                        </div>
+                    </section>
 
-while($row=$stmt->fetch(PDO::FETCH_ASSOC))
-        {
-            extract($row);
-            ?>
-            <option value="<?php echo e($idmar); ?>"><?php echo e($nomarc); ?></option>
-            <?php
-        }
-        ?>
-     ?>
-        
-    </select>
+                    <section class="tarjeta-form">
+                        <h2><span class="las la-coins"></span> Precio e inventario</h2>
 
-    <label for="psw"><b>Categoria del producto</b></label><span class="badge-warning">*</span>
-    <select required name="prdcate" id="cat">
-        <option value="<?php echo e($d->idcate); ?>"><?php echo e($d->nocate); ?></option>
-        <option>-----------------------------Seleccione------------------------------------</option>
+                        <div class="fila-campos">
+                            <div>
+                                <label for="prdprec">Precio del producto <span class="req">*</span></label>
+                                <div class="campo-con-unidad">
+                                    <span class="unidad">S/</span>
+                                    <input type="number" id="prdprec" name="prdprec" value="<?php echo e($d->precio); ?>" min="0" step="0.01" required>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="prdstock">Stock actual <span class="req">*</span></label>
+                                <input type="number" id="prdstock" name="prdstock" value="<?php echo (int)$d->stock; ?>" min="0" step="1" required>
+                            </div>
+                        </div>
+                        <p class="nota"><span class="las la-info-circle"></span> Los ajustes de stock se registran en el kardex como un conteo o una merma, según corresponda. Las compras y ventas lo actualizan solas.</p>
+                    </section>
 
-        <?php 
-    $stmt = $connect->prepare('SELECT * FROM categoria WHERE state = 1');
-    $stmt->execute();
+                    <section class="tarjeta-form">
+                        <h2><span class="las la-tag"></span> Clasificación</h2>
 
-while($row=$stmt->fetch(PDO::FETCH_ASSOC))
-        {
-            extract($row);
-            ?>
-            <option value="<?php echo e($idcate); ?>"><?php echo e($nocate); ?></option>
-            <?php
-        }
-        ?>
-     ?>
-    </select>
-
-    <label for="email"><b>Modelo del producto</b></label><span class="badge-warning">*</span>
-    <input type="text" value="<?php echo e($d->modelo); ?>" placeholder="ejm: Lenovo" name="prdmod"  required>
-
-     <label for="email"><b>Peso del producto</b></label><span class="badge-warning">*</span>
-    <input type="text" value="<?php echo e($d->peso); ?>" placeholder="ejm: 20kg" name="prdpes"  required>
-    <label for="prdgar"><b>Meses de garantía de la marca</b></label><span class="badge-warning">*</span>
-    <input type="number" id="prdgar" name="prdgar" min="0" max="120" value="<?php echo (int)$d->garantia_meses; ?>" required>
-                   
-    </div>
-
-
-    <hr>
-   
-    <button type="submit" name="upd_prodct" class="registerbtn">Guardar</button>
-  </div>
-  
-</form>
-
- <?php endforeach; ?>
-  
-    <?php else:?>
-      <p class="alert alert-warning">No hay datos</p>
-    <?php endif; ?>
-            
+                        <div class="fila-campos">
+                            <div>
+                                <label for="prdmarc">Marca <span class="req">*</span></label>
+                                <select id="prdmarc" name="prdmarc" required>
+<?php foreach ($marcas as $m): ?>
+                                    <option value="<?php echo (int)$m->idmar; ?>"<?php echo (int)$m->idmar === (int)$d->idmar ? ' selected' : ''; ?>><?php echo e($m->nomarc); ?><?php echo (int)$m->state === 1 ? '' : ' (dada de baja)'; ?></option>
+<?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="prdcate">Categoría <span class="req">*</span></label>
+                                <select id="prdcate" name="prdcate" required>
+<?php foreach ($categorias as $c): ?>
+                                    <option value="<?php echo (int)$c->idcate; ?>"<?php echo (int)$c->idcate === (int)$d->idcate ? ' selected' : ''; ?>><?php echo e($c->nocate); ?><?php echo (int)$c->state === 1 ? '' : ' (dada de baja)'; ?></option>
+<?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="fila-campos">
+                            <div>
+                                <label for="prdmod">Modelo <span class="req">*</span></label>
+                                <input type="text" id="prdmod" name="prdmod" value="<?php echo e($d->modelo); ?>" required>
+                            </div>
+                            <div>
+                                <label for="prdpes">Peso del producto <span class="req">*</span></label>
+                                <input type="text" id="prdpes" name="prdpes" value="<?php echo e($d->peso); ?>" placeholder="ej. 1.6 kg" required>
+                            </div>
+                        </div>
+                        <label for="prdgar">Meses de garantía de la marca <span class="req">*</span></label>
+                        <select id="prdgar" name="prdgar" required>
+<?php foreach ($opcionesGarantia as $meses): ?>
+                            <option value="<?php echo $meses; ?>"<?php echo $meses === (int)$d->garantia_meses ? ' selected' : ''; ?>><?php echo $meses === 0 ? 'Sin garantía' : $meses . ' meses'; ?></option>
+<?php endforeach; ?>
+                        </select>
+                    </section>
+                </form>
+<?php endif; ?>
             </div>
-            
+
 <?php require __DIR__ . '/../layout/pie.php'; ?>
     <?php include_once '../../backend/php/upd_prodct.php' ?>
     <script type="text/javascript" src="../../backend/js/reenvio.js"></script>
+    <script type="text/javascript">
+    (function () {
+        // contador de la descripcion
+        var des = document.getElementById('prddes');
+        var cont = document.getElementById('contador-des');
+        if (des) {
+            var contar = function () { cont.textContent = des.value.length; };
+            des.addEventListener('input', contar);
+            contar();
+        }
 
- 
-
+        // vista previa de la imagen nueva antes de guardar
+        var archivo = document.getElementById('foto');
+        if (!archivo) { return; }
+        archivo.addEventListener('change', function () {
+            var f = archivo.files[0];
+            if (!f) { return; }
+            if (f.size > 5 * 1024 * 1024) {
+                swal('Imagen muy pesada', 'La imagen supera el máximo de 5 MB.', 'warning');
+                archivo.value = '';
+                return;
+            }
+            var img = document.getElementById('vista-foto');
+            var url = URL.createObjectURL(f);
+            img.onload = function () {
+                document.getElementById('foto-medidas').textContent = img.naturalWidth + ' × ' + img.naturalHeight + ' px · ' + Math.round(f.size / 1024) + ' KB';
+            };
+            img.src = url;
+            img.hidden = false;
+            var sin = document.getElementById('sin-foto');
+            if (sin) { sin.hidden = true; }
+            document.getElementById('foto-titulo').textContent = 'Imagen nueva (sin guardar)';
+            document.getElementById('foto-nombre').textContent = f.name;
+        });
+    })();
+    </script>
 </body>
 </html>
