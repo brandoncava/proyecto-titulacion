@@ -92,6 +92,28 @@ $MENU = [
             </div>
         </div>
     </div>
+    <script>
+    // el menu conserva su scroll al cambiar de pagina y la seccion activa siempre queda a la vista
+    // (va aqui y no al final para que se acomode antes de dibujarse, sin salto)
+    (function () {
+        var menu = document.querySelector('.side-menu');
+        if (!menu) { return; }
+        try {
+            var guardado = sessionStorage.getItem('scrollMenu');
+            if (guardado !== null) { menu.scrollTop = parseInt(guardado, 10) || 0; }
+        } catch (e) {}
+        var activo = menu.querySelector('a.active');
+        if (activo) {
+            var a = activo.getBoundingClientRect(), m = menu.getBoundingClientRect();
+            if (a.top < m.top || a.bottom > m.bottom) {
+                menu.scrollTop += a.top - m.top - (m.height - a.height) / 2;
+            }
+        }
+        window.addEventListener('pagehide', function () {
+            try { sessionStorage.setItem('scrollMenu', menu.scrollTop); } catch (e) {}
+        });
+    })();
+    </script>
 
     <div class="main-content">
 
