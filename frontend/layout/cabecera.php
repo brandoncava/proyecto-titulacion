@@ -94,6 +94,11 @@ $MENU = [
                     <span class="las la-bars"></span>
                 </label>
 
+                <div class="saludo">
+                    <h1>Bienvenido <strong><?php echo e($_SESSION['nombre']); ?></strong></h1>
+                    <small>Home / <?php echo e($migas); ?></small>
+                </div>
+
                 <div class="header-menu">
                     <div class="user">
                         <div class="bg-img" style="background-image: url(../../backend/img/user13.png)"></div>
@@ -103,8 +108,3 @@ $MENU = [
         </header>
 
         <main>
-
-            <div class="page-header">
-                <h1>Bienvenido <strong><?php echo e($_SESSION['nombre']); ?></strong></h1>
-                <small>Home / <?php echo e($migas); ?></small>
-            </div>
