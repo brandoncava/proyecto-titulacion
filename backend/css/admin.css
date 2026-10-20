@@ -1377,3 +1377,63 @@ td small { display: block; color: var(--text-grey); }
     .saludo small { display: none; }
     .page-content { padding: 1rem; }
 }
+
+/* -----------------------------MENU LATERAL ANIMADO--------------------------*/
+/* al plegar/desplegar con el boton de menu todo se desliza a la vez; los textos se
+   desvanecen en vez de desaparecer de golpe (display:none no se puede animar) */
+.sidebar {
+    overflow-x: hidden;
+    transition: width 300ms ease, left 300ms ease;
+}
+.main-content {
+    transition: margin-left 300ms ease, width 300ms ease;
+}
+header {
+    transition: left 300ms ease;
+}
+.side-header h3 {
+    transition: font-size 200ms ease;
+}
+.profile {
+    max-height: 220px;
+    overflow: hidden;
+    transition: max-height 300ms ease, opacity 200ms ease, padding 300ms ease;
+}
+.side-menu a small {
+    display: block;
+    max-height: 2em;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: max-height 300ms ease, opacity 200ms ease;
+}
+.side-menu a span {
+    transition: font-size 300ms ease;
+}
+#menu-toggle:checked ~ .sidebar .profile {
+    display: block;
+    max-height: 0;
+    opacity: 0;
+    padding: 0;
+}
+#menu-toggle:checked ~ .sidebar .side-menu a small {
+    display: block;
+    max-height: 0;
+    opacity: 0;
+}
+/* en celular el menu entra desde la izquierda y se ve completo */
+@media only screen and (max-width: 768px) {
+    #menu-toggle:checked ~ .sidebar .profile {
+        max-height: 220px;
+        opacity: 1;
+        padding: 2rem 0;
+    }
+    #menu-toggle:checked ~ .sidebar .side-menu a small {
+        max-height: 2em;
+        opacity: 1;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .sidebar, .main-content, header, .profile, .side-menu a small, .side-menu a span, .side-header h3 {
+        transition: none;
+    }
+}
