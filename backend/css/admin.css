@@ -1702,3 +1702,39 @@ header {
     .btn-cabecera .texto { display: none; }
     .btn-cabecera { padding: 7px 9px; }
 }
+
+/* -----------------------------CAMBIO DE PAGINA SIN DESTELLO--------------------------*/
+/* fondo gris desde el primer instante (antes se veia un destello blanco) */
+html {
+    background: #F8F7FA;
+}
+/* Chrome/Edge: el cambio de modulo es un fundido corto; el menu y la barra superior
+   se quedan quietos porque son "el mismo elemento" en las dos paginas */
+@view-transition {
+    navigation: auto;
+}
+.sidebar { view-transition-name: menu-lateral; }
+header { view-transition-name: barra-superior; }
+.boton-plegar { view-transition-name: boton-plegar; }
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: 160ms;
+}
+/* el menu, la barra y el boton cambian al instante, sin mezclarse con la pagina anterior */
+::view-transition-group(menu-lateral),
+::view-transition-group(barra-superior),
+::view-transition-group(boton-plegar),
+::view-transition-new(menu-lateral),
+::view-transition-new(barra-superior),
+::view-transition-new(boton-plegar) {
+    animation: none;
+}
+::view-transition-old(menu-lateral),
+::view-transition-old(barra-superior),
+::view-transition-old(boton-plegar) {
+    animation: none;
+    opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+    @view-transition { navigation: none; }
+}

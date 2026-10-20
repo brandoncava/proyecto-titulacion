@@ -1,5 +1,5 @@
 <?php
-// Inicio comun de las paginas del panel: <head>, loader, sidebar, cabecera y titulo.
+// Inicio comun de las paginas del panel: <head>, sidebar, cabecera y titulo.
 // La pagina define antes de incluirlo:
 //   $seccion  clave del menu que queda marcado (ver $MENU)
 //   $migas    ruta que se muestra bajo el titulo, ej. 'Productos / Nuevo'
@@ -33,7 +33,6 @@ $MENU = [
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
     <title>CK COMPUTERS</title>
     <link rel="stylesheet" href="../../backend/css/admin.css">
-    <link rel="stylesheet" href="../../backend/css/loader.css">
     <link rel="icon" type="image/svg+xml" href="../../backend/img/ck-icono.svg">
     <link rel="stylesheet" href="https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css">
     <link rel="stylesheet" type="text/css" href="../../backend/css/font.css">
@@ -44,11 +43,6 @@ $MENU = [
 <?php endif; ?>
 </head>
 <body>
-    <div class="loader-container">
-        <div class="load_animation">
-            <ion-icon name="bag-handle-outline" class="animation"></ion-icon>
-        </div>
-    </div>
     <input type="checkbox" id="menu-toggle">
     <!-- boton redondo en el borde del menu: pliega/despliega en escritorio -->
     <label for="menu-toggle" class="boton-plegar" title="Plegar o desplegar el menú">

@@ -18,7 +18,4 @@ if (!isset($seccion)) {
     <script src="../../backend/js/buttonsprint.js"></script>
     <script src="../../backend/js/tablas.js"></script>
 <?php endif; ?>
-    <script src="../../backend/js/loader.js"></script>
-    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js"></script>

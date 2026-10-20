@@ -17,19 +17,8 @@ include_once '../backend/php/login.php';
   <title>CK COMPUTERS</title>
   <link rel="icon" type="image/svg+xml" href="../backend/img/ck-icono.svg">
   <link rel="stylesheet" type="text/css" href="../backend/css/style.css">
-  <link rel="stylesheet" href="../backend/css/loader.css">
 </head>
 <body class="login-page">
-  <div class="loader-container">
-    <div class="load_animation">
-      <ion-icon name="bag-handle-outline" class="animation"></ion-icon>
-    </div>
-  </div>
-
-  <div class="wrapper">
-    <div class="loader"></div>
-  </div>
-
   <main class="login">
     <section class="login-form">
       <form method="POST" role="form" onsubmit="return validacion()">
@@ -72,17 +61,7 @@ include_once '../backend/php/login.php';
   </main>
 
   <script src="../backend/js/jquery.min.js"></script>
-  <script type="text/javascript" src="../backend/js/script.js"></script>
   <script type="text/javascript" src="../backend/js/validate.js"></script>
   <script type="text/javascript" src="../backend/js/reenvio.js"></script>
-  <script src="../backend/js/loader.js"></script>
-  <script type="text/javascript">
-    setTimeout(function(){
-      $(".load_animation").fadeOut(500);
-      document.querySelector(".wrapper").classList.add("fade");
-    }, 3000);
-  </script>
-  <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
-  <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
 </body>
 </html>
