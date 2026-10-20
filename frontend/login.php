@@ -15,7 +15,7 @@ include_once '../backend/php/login.php';
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CK COMPUTERS</title>
-  <link rel="icon" type="image/x-icon" href="../backend/img/ck.ico">
+  <link rel="icon" type="image/svg+xml" href="../backend/img/ck-icono.svg">
   <link rel="stylesheet" type="text/css" href="../backend/css/style.css">
   <link rel="stylesheet" href="../backend/css/loader.css">
 </head>
@@ -65,7 +65,7 @@ include_once '../backend/php/login.php';
 
     <section class="login-info">
       <div class="login-info-content">
-        <img src="../backend/img/cklogo.png" alt="CK COMPUTERS" class="ck-logo">
+        <img src="../backend/img/cklogo.svg" alt="CK COMPUTERS" class="ck-logo">
         <p>HOLA DE NUEVO, BIENVENIDO A TU SISTEMA DE VENTAS</p>
       </div>
     </section>

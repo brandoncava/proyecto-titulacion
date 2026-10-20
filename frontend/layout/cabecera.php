@@ -35,7 +35,7 @@ $MENU = [
     <title>CK COMPUTERS</title>
     <link rel="stylesheet" href="../../backend/css/admin.css">
     <link rel="stylesheet" href="../../backend/css/loader.css">
-    <link rel="icon" type="image/png" href="../../backend/img/ck.ico">
+    <link rel="icon" type="image/svg+xml" href="../../backend/img/ck-icono.svg">
     <link rel="stylesheet" href="https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css">
     <link rel="stylesheet" type="text/css" href="../../backend/css/font.css">
 <?php if ($tablas): ?>
@@ -51,18 +51,19 @@ $MENU = [
         </div>
     </div>
     <input type="checkbox" id="menu-toggle">
+    <!-- boton redondo en el borde del menu: pliega/despliega en escritorio -->
+    <label for="menu-toggle" class="boton-plegar" title="Plegar o desplegar el menú">
+        <span class="las la-angle-left"></span>
+    </label>
     <div class="sidebar">
         <div class="side-header">
-            <h3>CK COMPUTERS</h3>
+            <h3 class="logo">
+                <img class="logo-completo" src="../../backend/img/cklogo.svg" alt="CK Computer's">
+                <span class="logo-icono" aria-hidden="true"></span>
+            </h3>
         </div>
 
         <div class="side-content">
-            <div class="profile">
-                <div class="profile-img bg-img" style="background-image: url(../../backend/img/user13.png)"></div>
-                <h4><?php echo e($_SESSION['username']); ?></h4>
-                <small><?php echo e(nombre_rol(rol_actual())); ?></small>
-            </div>
-
             <div class="side-menu">
                 <ul>
 <?php foreach ($MENU as $clave => [$permiso, $ruta, $icono, $texto]): ?>
@@ -75,13 +76,19 @@ $MENU = [
                     </li>
 <?php endif; ?>
 <?php endforeach; ?>
-                    <li>
-                        <a href="../salir.php" onclick="return confirm('¿Seguro que deseas cerrar sesión?');">
-                            <span class="las la-power-off"></span>
-                            <small>Salir</small>
-                        </a>
-                    </li>
                 </ul>
+            </div>
+
+            <!-- tarjeta del usuario al pie del menu -->
+            <div class="perfil">
+                <a class="perfil-salir" href="../salir.php" title="Cerrar sesión" onclick="return confirm('¿Seguro que deseas cerrar sesión?');">
+                    <span class="las la-sign-out-alt"></span>
+                </a>
+                <div class="perfil-foto bg-img" style="background-image: url(../../backend/img/user13.png)"></div>
+                <div class="perfil-datos">
+                    <h4><?php echo e($_SESSION['username']); ?></h4>
+                    <small><?php echo e(nombre_rol(rol_actual())); ?></small>
+                </div>
             </div>
         </div>
     </div>
@@ -90,7 +97,8 @@ $MENU = [
 
         <header>
             <div class="header-content">
-                <label for="menu-toggle">
+                <!-- en celular el menu esta fuera de pantalla: se abre desde aqui -->
+                <label for="menu-toggle" class="menu-movil" title="Abrir el menú">
                     <span class="las la-bars"></span>
                 </label>
 
@@ -99,11 +107,6 @@ $MENU = [
                     <small>Home / <?php echo e($migas); ?></small>
                 </div>
 
-                <div class="header-menu">
-                    <div class="user">
-                        <div class="bg-img" style="background-image: url(../../backend/img/user13.png)"></div>
-                    </div>
-                </div>
             </div>
         </header>
 

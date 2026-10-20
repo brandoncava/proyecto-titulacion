@@ -144,13 +144,6 @@
     width: 60px;
 }
 
-#menu-toggle:checked ~ .sidebar .side-header h3 {
-    width: 30px;
-    height: 30px;
-    font-size: 0;
-    background: url('../img/ck.ico') center center / contain no-repeat;
-}
-
 #menu-toggle:checked ~ .main-content {
     margin-left: 60px;
     width: calc(100% - 60px);
@@ -1436,4 +1429,204 @@ header {
     .sidebar, .main-content, header, .profile, .side-menu a small, .side-menu a span, .side-header h3 {
         transition: none;
     }
+}
+
+/* boton redondo en el borde del menu (escritorio); la flecha gira al plegar */
+.boton-plegar {
+    position: fixed;
+    top: 16px;
+    left: 151px;
+    z-index: 120;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid #e4e4e7;
+    box-shadow: 0 2px 6px rgb(0 0 0 / 15%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--main-color);
+    transition: left 300ms ease, background 150ms, color 150ms;
+}
+.boton-plegar span {
+    font-size: 1rem;
+    transition: transform 300ms ease;
+}
+.boton-plegar:hover {
+    background: var(--main-color);
+    color: #fff;
+}
+#menu-toggle:checked ~ .boton-plegar {
+    left: 46px;
+}
+#menu-toggle:checked ~ .boton-plegar span {
+    transform: rotate(180deg);
+}
+.menu-movil {
+    display: none;
+}
+@media only screen and (max-width: 768px) {
+    .boton-plegar { display: none; }
+    .menu-movil { display: block; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .boton-plegar, .boton-plegar span { transition: none; }
+}
+
+/* -----------------------------TARJETA DEL USUARIO AL PIE DEL MENU--------------------------*/
+/* el menu ocupa el alto disponible (con su propio scroll) y la tarjeta queda fija abajo */
+.side-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.side-menu {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.side-menu::-webkit-scrollbar { width: 5px; }
+.side-menu::-webkit-scrollbar-thumb { background: #4a4458; border-radius: 10px; }
+.perfil {
+    position: relative;
+    margin: 10px;
+    padding: 16px 10px 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(255, 255, 255, .08);
+    text-align: center;
+    transition: margin 300ms ease, padding 300ms ease;
+}
+.perfil-foto {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 8px;
+    border: 2px solid #899DC1;
+    transition: width 300ms ease, height 300ms ease, margin 300ms ease;
+}
+.perfil-datos {
+    max-height: 60px;
+    overflow: hidden;
+    transition: max-height 300ms ease, opacity 200ms ease;
+}
+.perfil-datos h4 {
+    color: #fff;
+    font-weight: 500;
+    font-size: .9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.perfil-datos small {
+    color: #899DC1;
+    font-weight: 600;
+    font-size: .75rem;
+}
+.perfil-salir {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #899DC1;
+    font-size: 1.2rem;
+    transition: background 150ms, color 150ms;
+}
+.perfil-salir:hover {
+    background: #B42318;
+    color: #fff;
+}
+/* menu plegado: solo la foto y debajo el boton de salir */
+#menu-toggle:checked ~ .sidebar .perfil {
+    margin: 6px;
+    padding: 8px 0;
+}
+#menu-toggle:checked ~ .sidebar .perfil-foto {
+    width: 34px;
+    height: 34px;
+    margin-bottom: 4px;
+}
+#menu-toggle:checked ~ .sidebar .perfil-datos {
+    max-height: 0;
+    opacity: 0;
+}
+#menu-toggle:checked ~ .sidebar .perfil-salir {
+    position: static;
+    margin: 0 auto;
+}
+@media only screen and (max-width: 768px) {
+    #menu-toggle:checked ~ .sidebar .perfil { margin: 10px; padding: 16px 10px 12px; }
+    #menu-toggle:checked ~ .sidebar .perfil-foto { width: 56px; height: 56px; margin-bottom: 8px; }
+    #menu-toggle:checked ~ .sidebar .perfil-datos { max-height: 60px; opacity: 1; }
+    #menu-toggle:checked ~ .sidebar .perfil-salir { position: absolute; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .perfil, .perfil-foto, .perfil-datos { transition: none; }
+}
+
+/* -----------------------------LOGO DEL MENU--------------------------*/
+/* cklogo.svg es morado con fondo transparente: con el filtro se dibuja en blanco
+   sobre la franja morada. Plegado se ve solo el simbolo "CK" (la parte izquierda del logo) */
+.side-header h3.logo {
+    position: relative;
+    width: 100%;
+    height: 36px;
+    font-size: 0;
+    background: none;
+}
+.logo-completo, .logo-icono {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    filter: brightness(0) invert(1);
+    transition: opacity 250ms ease;
+}
+.logo-completo {
+    left: 0;
+    width: 100%;
+    max-height: 36px;
+    object-fit: contain;
+}
+/* el simbolo queda a la izquierda para no tocar el boton redondo de plegar */
+.logo-icono {
+    left: 5px;
+    width: 31px;
+    height: 26px;
+    background: url('../img/ck-icono.svg') left center / contain no-repeat;
+    opacity: 0;
+}
+.side-header {
+    padding: 0 26px 0 12px;   /* aire para el boton redondo */
+}
+#menu-toggle:checked ~ .sidebar .side-header {
+    padding: 0 6px;
+}
+#menu-toggle:checked ~ .sidebar .side-header h3.logo {
+    width: 100%;
+    height: 36px;
+    background: none;
+}
+#menu-toggle:checked ~ .sidebar .logo-completo { opacity: 0; }
+#menu-toggle:checked ~ .sidebar .logo-icono { opacity: 1; }
+@media only screen and (max-width: 768px) {
+    #menu-toggle:checked ~ .sidebar .logo-completo { opacity: 1; }
+    #menu-toggle:checked ~ .sidebar .logo-icono { opacity: 0; }
+}
+
+/* tarjeta plegada: la foto arriba y el boton de salir debajo */
+#menu-toggle:checked ~ .sidebar .perfil {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+#menu-toggle:checked ~ .sidebar .perfil-salir { order: 2; }
+@media only screen and (max-width: 768px) {
+    #menu-toggle:checked ~ .sidebar .perfil { display: block; }
 }
