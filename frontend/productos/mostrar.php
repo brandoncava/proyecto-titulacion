@@ -81,8 +81,7 @@ if($sentencia){
                                     <td>
                                         <div class="acciones">
 <?php if (puede('productos_ed')): ?>
-                                            <a class="btn-icono" title="Editar (datos, precio y stock)" href="../productos/editar.php?id=<?php echo e($d->idprod); ?>"><span class="las la-pen"></span></a>
-                                            <a class="btn-icono" title="Cambiar foto" href="../productos/foto.php?id=<?php echo e($d->idprod); ?>"><span class="las la-image"></span></a>
+                                            <a class="btn-icono" title="Editar (datos, imagen, precio y stock)" href="../productos/editar.php?id=<?php echo e($d->idprod); ?>"><span class="las la-pen"></span></a>
 <?php endif; ?>
 <?php if (puede('productos_el')): ?>
                                             <form method="POST" action="" onsubmit="return confirm('¿Realmente desea eliminar este producto?');">
