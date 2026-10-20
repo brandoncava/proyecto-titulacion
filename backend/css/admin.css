@@ -2003,3 +2003,21 @@ td form input[type=number].form-control:focus {
 td form:has(.form-group) {
     align-items: center;
 }
+
+/* etiqueta con un enlace de accion al lado (ej. Marca + "Nueva marca") */
+.label-con-accion {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+}
+.tarjeta-form .label-con-accion label.enlace-accion {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin: 12px 0 6px;
+    color: var(--main-color);
+    font-weight: 600;
+    cursor: pointer;
+}
+.tarjeta-form .label-con-accion label.enlace-accion:hover { text-decoration: underline; }
