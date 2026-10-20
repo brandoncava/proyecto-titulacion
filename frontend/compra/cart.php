@@ -11,6 +11,7 @@ require __DIR__ . '/../layout/cabecera.php';
 ?>
             
             <div class="page-content">
+<?php $modifica = $_SESSION['modifica_compra'] ?? null; if ($modifica) { include __DIR__ . '/aviso_modificacion.php'; } ?>
             
             <div class="records table-responsive">
                      

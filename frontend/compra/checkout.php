@@ -10,6 +10,7 @@ require __DIR__ . '/../layout/cabecera.php';
 ?>
             
             <div class="page-content">
+<?php $modifica = $_SESSION['modifica_compra'] ?? null; if ($modifica) { include __DIR__ . '/aviso_modificacion.php'; } ?>
 
                 <div class="input-block">
     
@@ -52,7 +53,7 @@ require __DIR__ . '/../layout/cabecera.php';
     <br>
   
     <label for="email"><b>Proveedores</b></label><span class="badge-warning">*</span>
-    <select required name="cxtprov" id="provee">
+    <select required name="cxtprov" id="provee" data-valor="<?php echo (int)($modifica['idprov'] ?? 0) ?: ''; ?>">
         <option value="">Seleccione</option>
        
        
@@ -61,35 +62,36 @@ require __DIR__ . '/../layout/cabecera.php';
    <label for="psw"><b>Comprobante de pago</b></label><span class="badge-warning">*</span>
     <select required name="cxcom" id="cxcom">
         <option value="">Seleccione</option>
-        <option value="Factura">Factura</option>
-        <option value="Boleta">Boleta</option>
+        <option value="Factura"<?php echo ($modifica['tipc'] ?? '') === 'Factura' ? ' selected' : ''; ?>>Factura</option>
+        <option value="Boleta"<?php echo ($modifica['tipc'] ?? '') === 'Boleta' ? ' selected' : ''; ?>>Boleta</option>
        
     </select>
 
     <label for="cxigv"><b>El comprobante del proveedor</b></label><span class="badge-warning">*</span>
     <select required name="cxigv" id="cxigv">
         <option value="1">Incluye IGV</option>
-        <option value="0">No incluye IGV</option>
+        <option value="0"<?php echo ($modifica && !$modifica['con_igv']) ? ' selected' : ''; ?>>No incluye IGV</option>
     </select>
 
     <label for="serie_doc"><b>Serie y número del comprobante</b></label><span class="badge-warning">*</span>
-    <input type="text" name="serie_doc" id="serie_doc" maxlength="4" placeholder="Serie ejm: F001" style="text-transform:uppercase;" required>
-    <input type="text" name="numero_doc" id="numero_doc" maxlength="8" onKeypress="if (event.keyCode < 48 || event.keyCode > 57) event.returnValue = false;" placeholder="Número ejm: 00001234" required>
+    <input type="text" name="serie_doc" id="serie_doc" maxlength="4" placeholder="Serie ejm: F001" style="text-transform:uppercase;" value="<?php echo e($modifica['serie_doc'] ?? ''); ?>" required>
+    <input type="text" name="numero_doc" id="numero_doc" maxlength="8" onKeypress="if (event.keyCode < 48 || event.keyCode > 57) event.returnValue = false;" placeholder="Número ejm: 00001234" value="<?php echo e($modifica['numero_doc'] ?? ''); ?>" required>
 
     <label for="fecha_emision"><b>Fecha de emisión del comprobante</b></label><span class="badge-warning">*</span>
-    <input type="date" name="fecha_emision" id="fecha_emision" max="<?php echo date('Y-m-d'); ?>" required>
+    <input type="date" name="fecha_emision" id="fecha_emision" max="<?php echo date('Y-m-d'); ?>" value="<?php echo e($modifica['fecha_emision'] ?? ''); ?>" required>
 
     <label for="psw"><b>Método de pago</b></label><span class="badge-warning">*</span>
         <select required name="cxtcre" id="cxtcre">
             <option value="">Seleccione</option>
-            <option value="Contado">Contado</option>
-            <option value="Tarjeta">Tarjeta</option>
+<?php foreach (['Contado', 'Tarjeta', 'Transferencia'] as $m): ?>
+            <option value="<?php echo $m; ?>"<?php echo ($modifica['method'] ?? '') === $m ? ' selected' : ''; ?>><?php echo $m; ?></option>
+<?php endforeach; ?>
         </select>
 
     <hr>
    
     <button type="submit" id="validate"  name="order" class="registerbtn <?= ($cart_grand_total > 1)?'':'disabled'; ?>">Guardar</button>
-    <button onclick="location.href='cart.php'" class="pabtn ">Cancelar</button>
+    <button type="button" onclick="location.href='cart.php'" class="pabtn ">Cancelar</button>
   </div>
   
 </form>

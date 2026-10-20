@@ -206,4 +206,45 @@ $pdf->SetX($xTot);
 $pdf->Cell(50, 9, 'Total:', 1, 0, 'C', true);
 $pdf->Cell(30, 9, 'S/ ' . number_format($row['total_price'], 2), 1, 1, 'R');
 
+/* Pagos: uno o varios medios */
+$pagos = $connect->prepare('SELECT metodo, monto, num_operacion FROM orders_pagos WHERE idord = ? ORDER BY idpago');
+$pagos->execute([$row['idord']]);
+$pagos = $pagos->fetchAll(PDO::FETCH_ASSOC);
+
+if ($pagos) {
+    $pdf->Ln(6);
+    $pdf->SetX($margen);
+    $pdf->SetFont('Arial', 'B', 10);
+    $pdf->SetTextColor(255, 255, 255);
+    $pdf->Cell(60, 7, 'Medio de pago', 1, 0, 'C', true);
+    $pdf->Cell(70, 7, utf8_decode('N° de operación'), 1, 0, 'C', true);
+    $pdf->Cell(50, 7, 'Monto', 1, 1, 'C', true);
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->SetFont('Arial', '', 10);
+    foreach ($pagos as $p) {
+        $pdf->SetX($margen);
+        $pdf->Cell(60, 7, utf8_decode($p['metodo']), 1, 0);
+        $pdf->Cell(70, 7, $p['num_operacion'] ?: '-', 1, 0, 'C');
+        $pdf->Cell(50, 7, 'S/ ' . number_format($p['monto'], 2), 1, 1, 'R');
+    }
+}
+
+/* Venta que reemplaza a otra (modificacion) o venta anulada */
+$pdf->Ln(4);
+$pdf->SetX($margen);
+$pdf->SetFont('Arial', 'I', 9);
+if (!empty($row['reemplaza_a'])) {
+    $orig = $connect->prepare('SELECT serie, numero FROM orders WHERE idord = ?');
+    $orig->execute([$row['reemplaza_a']]);
+    $orig = $orig->fetch(PDO::FETCH_ASSOC);
+    if ($orig) {
+        $pdf->Cell(0, 6, utf8_decode('Este comprobante reemplaza a ' . formato_comprobante($orig['serie'], $orig['numero']) . ' (anulado).'), 0, 1);
+    }
+}
+if ((int)$row['anulada'] === 1) {
+    $pdf->SetTextColor(180, 35, 24);
+    $pdf->MultiCell(180, 6, utf8_decode('ANULADO: ' . $row['motivo_anulacion']));
+    $pdf->SetTextColor(0, 0, 0);
+}
+
 $pdf->Output('boleta_' . $row['idord'] . '.pdf', 'D');

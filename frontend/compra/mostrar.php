@@ -70,6 +70,11 @@ if($sentencia){
             <?php if ((int)$d->anulada === 1): ?>
                 <span style="color:#B42318;font-weight:bold;margin-left:6px;">ANULADA</span>
             <?php elseif (puede('compras_anular')): ?>
+                <form method="POST" action="" style="display:inline" onsubmit="return confirm('¿Modificar esta compra? Sus productos se cargarán en el carrito de compras para editarlos.');">
+                    <?php echo csrf_campo(); ?>
+                    <input type="hidden" name="idordpur" value="<?php echo e($d->idordpur); ?>">
+                    <button type="submit" name="modificar_compra" title="Modificar compra" class="fa fa-pencil btn-accion btn-modificar"></button>
+                </form>
                 <form method="POST" action="" style="display:inline" onsubmit="return anularCompra(this);">
                     <?php echo csrf_campo(); ?>
                     <input type="hidden" name="idordpur" value="<?php echo e($d->idordpur); ?>">
@@ -111,5 +116,6 @@ function anularCompra(form){
 }
 </script>
 <?php include_once '../../backend/php/anular_compra.php'; ?>
+<?php include_once '../../backend/php/modificar_compra.php'; ?>
 </body>
 </html>

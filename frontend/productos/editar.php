@@ -13,7 +13,7 @@ require __DIR__ . '/../layout/cabecera.php';
             <?php 
 require '../../backend/config/Conexion.php';
 $id = filter_input(INPUT_GET, "id", FILTER_VALIDATE_INT) ?: 0;
- $sentencia = $connect->prepare("SELECT productos.idprod,productos.codpro ,productos.nomprd, productos.desprd, productos.foto, productos.precio, productos.stock, marca.idmar, marca.nomarc, categoria.idcate, categoria.nocate,productos.modelo, productos.peso, productos.state, productos.fere FROM productos INNER JOIN marca ON productos.idmar = marca.idmar INNER JOIN categoria ON productos.idcate = categoria.idcate WHERE idprod = ?");
+ $sentencia = $connect->prepare("SELECT productos.idprod,productos.codpro ,productos.nomprd, productos.desprd, productos.foto, productos.precio, productos.stock, marca.idmar, marca.nomarc, categoria.idcate, categoria.nocate,productos.modelo, productos.peso, productos.garantia_meses, productos.state, productos.fere FROM productos INNER JOIN marca ON productos.idmar = marca.idmar INNER JOIN categoria ON productos.idcate = categoria.idcate WHERE idprod = ?");
  $sentencia->execute([$id]);
 
 $data =  array();
@@ -95,6 +95,8 @@ while($row=$stmt->fetch(PDO::FETCH_ASSOC))
 
      <label for="email"><b>Peso del producto</b></label><span class="badge-warning">*</span>
     <input type="text" value="<?php echo e($d->peso); ?>" placeholder="ejm: 20kg" name="prdpes"  required>
+    <label for="prdgar"><b>Meses de garantía de la marca</b></label><span class="badge-warning">*</span>
+    <input type="number" id="prdgar" name="prdgar" min="0" max="120" value="<?php echo (int)$d->garantia_meses; ?>" required>
                    
     </div>
 

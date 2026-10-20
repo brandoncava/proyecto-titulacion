@@ -1,6 +1,16 @@
 # CK Computers — Sistema de ventas e inventario
 
-Sistema web para CK Computers (Trujillo): ventas, compras, productos, stock, categorías, marcas, clientes, proveedores, reporte de ventas por fechas y usuarios con perfiles.
+Sistema web para CK Computers (Trujillo): ventas, compras, productos, stock, categorías, marcas, clientes, proveedores, garantías, reportes y usuarios con perfiles.
+
+## Funciones principales
+
+- **Ventas** con boleta (DNI) o factura (RUC), IGV y series de comprobantes.
+- **Pagos mixtos**: una venta se puede pagar con varios medios (contado, tarjeta, Yape, Plin, transferencia); Yape, Plin y transferencia piden el N° de operación.
+- **Modificar venta**: la venta se carga en el carrito y, al finalizar, la original se anula y se emite un comprobante nuevo que la reemplaza.
+- **Compras** con el comprobante del proveedor; se pueden **modificar** (el stock se ajusta con la diferencia) o anular.
+- **Kardex**: cada entrada y salida de stock queda registrada.
+- **Órdenes de garantía**: recepción del producto del cliente (con PDF), validación del plazo de garantía de cada producto y seguimiento del trámite con la marca o proveedor (RMA) en 6 estados.
+- **Reportes** con filtros: ventas, compras, productos y clientes (con sus medios de pago).
 
 Hecho en PHP + MySQL/MariaDB, sin frameworks. Genera boletas y comprobantes en PDF con FPDF.
 
@@ -37,10 +47,10 @@ Todos los datos de la base son de prueba.
 
 | Usuario    | Contraseña      | Perfil        | Qué puede hacer |
 |------------|-----------------|---------------|-----------------|
-| `admin01`  | `Admin2026!`    | Administrador | Todo: dashboard, reporte de ventas, usuarios, anular ventas |
+| `admin01`  | `Admin2026!`    | Administrador | Todo: dashboard, reportes, usuarios, garantías, modificar y anular ventas y compras |
 | `admin02`  | `Admin2026!`    | Administrador | Igual que `admin01` |
-| `cajero01` | `Cajero2026!`   | Cajero        | Ventas, productos (ver) y clientes |
-| `emple01`  | `Empleado2026!` | Empleado      | Compras, productos, proveedores, categorías y marcas |
+| `cajero01` | `Cajero2026!`   | Cajero        | Ventas, productos (ver), clientes y garantías |
+| `emple01`  | `Empleado2026!` | Empleado      | Compras, productos, proveedores, categorías, marcas y garantías |
 
 Los permisos de cada perfil se definen en `backend/config/roles.php`.
 

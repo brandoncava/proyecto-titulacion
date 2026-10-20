@@ -4,6 +4,9 @@
 require_once __DIR__ . '/roles.php';
 require_once __DIR__ . '/helpers.php';
 
+// hora de Peru para date() (XAMPP trae Europe/Berlin); MySQL se ajusta igual en Conexion.php
+date_default_timezone_set('America/Lima');
+
 // duracion de "Mantener la sesion" en el login (30 dias)
 define('SESION_RECORDADA', 60 * 60 * 24 * 30);
 

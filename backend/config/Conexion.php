@@ -22,6 +22,8 @@ try {
             PDO::ATTR_EMULATE_PREPARES   => false,
         ]
     );
+    // NOW() con la hora de Peru (UTC-5, sin horario de verano), igual que date() en PHP
+    $connect->exec("SET time_zone = '-05:00'");
 } catch (PDOException $e) {
     // no mostrar el detalle del error al usuario
     error_log('Error de conexion a la base de datos: ' . $e->getMessage());

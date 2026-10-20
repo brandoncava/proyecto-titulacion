@@ -17,6 +17,10 @@ if(isset($_POST['upd_prodct']))
     $idcate=trim($_POST['prdcate']);
     $modelo=trim($_POST['prdmod']);
     $peso=trim($_POST['prdpes']);
+    $garantia = filter_input(INPUT_POST, 'prdgar', FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 120]]);
+    if ($garantia === false || $garantia === null) {
+        $garantia = 12;
+    }
 
     if ($codpro === '' || $nomprd === '' || !is_numeric($precio) || $precio < 0) {
         avisar_y_redirigir('Error!', 'El código, el nombre y un precio válido son obligatorios.', 'error', '../productos/mostrar.php');
@@ -35,7 +39,7 @@ if(isset($_POST['upd_prodct']))
     
     try {
 
-        $query = "UPDATE productos SET codpro=:codpro,nomprd=:nomprd,desprd=:desprd,precio=:precio,idmar=:idmar,idcate=:idcate,modelo=:modelo, peso=:peso WHERE idprod=:idprod LIMIT 1";
+        $query = "UPDATE productos SET codpro=:codpro,nomprd=:nomprd,desprd=:desprd,precio=:precio,idmar=:idmar,idcate=:idcate,modelo=:modelo, peso=:peso, garantia_meses=:garantia WHERE idprod=:idprod LIMIT 1";
         $statement = $connect->prepare($query);
 
         $data = [
@@ -47,6 +51,7 @@ if(isset($_POST['upd_prodct']))
             ':idcate' => $idcate,
             ':modelo' => $modelo,
             ':peso' => $peso,
+            ':garantia' => $garantia,
             ':idprod' => $idprod
         ];
         $query_execute = $statement->execute($data);

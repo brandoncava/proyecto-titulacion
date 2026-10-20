@@ -28,13 +28,13 @@ function password_predeterminada($rol)
 $PERMISOS = [
     ROL_ADMINISTRADOR => [
         'ventas', 'ventas_anular', 'compras', 'compras_anular', 'productos', 'productos_ed', 'productos_el',
-        'clientes', 'proveedores', 'catalogos', 'usuarios', 'series', 'reportes',
+        'clientes', 'proveedores', 'catalogos', 'usuarios', 'series', 'garantias', 'reportes',
     ],
     ROL_CAJERO => [
-        'ventas', 'productos', 'clientes',
+        'ventas', 'productos', 'clientes', 'garantias',
     ],
     ROL_EMPLEADO => [
-        'compras', 'productos', 'productos_ed', 'proveedores', 'catalogos',
+        'compras', 'productos', 'productos_ed', 'proveedores', 'catalogos', 'garantias',
     ],
 ];
 

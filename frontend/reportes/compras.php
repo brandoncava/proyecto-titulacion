@@ -5,70 +5,74 @@ require_once __DIR__ . '/../../backend/config/auth.php';
 requiere_permiso('reportes');
 
 require '../../backend/config/Conexion.php';
-
-// fecha Y-m-d valida o el valor por defecto
-function fecha_get($campo, $defecto)
-{
-    $v = $_GET[$campo] ?? '';
-    $f = DateTime::createFromFormat('Y-m-d', $v);
-    return ($f && $f->format('Y-m-d') === $v) ? $v : $defecto;
-}
-
-$hoy   = date('Y-m-d');
-$desde = fecha_get('desde', date('Y-01-01'));
-$hasta = fecha_get('hasta', $hoy);
-if ($desde > $hasta) {
-    [$desde, $hasta] = [$hasta, $desde];
-}
+require __DIR__ . '/comun.php';
 
 $estados = ['validas' => 'Solo válidas', 'anuladas' => 'Solo anuladas', 'todas' => 'Todas'];
-$estado  = array_key_exists($_GET['estado'] ?? '', $estados) ? $_GET['estado'] : 'validas';
+$estado  = opcion_get('estado', $estados, 'validas');
 
-// el rango incluye el dia "hasta" completo
-$rango = ['desde' => $desde . ' 00:00:00', 'hasta' => date('Y-m-d', strtotime($hasta . ' +1 day')) . ' 00:00:00'];
-$enRango = 'o.placed_on >= :desde AND o.placed_on < :hasta';
+$proveedores = ['' => 'Todos'];
+foreach ($connect->query('SELECT idprov, nomprv FROM proveedores ORDER BY nomprv') as $p) {
+    $proveedores[(string)$p->idprov] = $p->nomprv;
+}
+$idprov = opcion_get('proveedor', $proveedores, '');
+
+$comprobantes = ['' => 'Todos'] + array_combine(COMPROBANTES_COMPRA, COMPROBANTES_COMPRA);
+$tipc = opcion_get('comprobante', $comprobantes, '');
+
+$metodos = ['' => 'Todas'] + array_combine(METODOS_PAGO, METODOS_PAGO);
+$metodo = opcion_get('metodo', $metodos, '');
+
+// filtros que valen para el resumen y para la lista (el estado solo para la lista)
+$where = 'o.placed_on >= :desde AND o.placed_on < :hasta';
+$params = $rango;
+if ($idprov !== '') {
+    $where .= ' AND o.idprov = :prov';
+    $params['prov'] = (int)$idprov;
+}
+if ($tipc !== '') {
+    $where .= ' AND o.tipc = :tipc';
+    $params['tipc'] = $tipc;
+}
+if ($metodo !== '') {
+    $where .= ' AND o.method = :metodo';
+    $params['metodo'] = $metodo;
+}
 
 $resumen = $connect->prepare(
-    "SELECT SUM(o.anulada = 0)                                   AS compras,
-            COALESCE(SUM(CASE WHEN o.anulada = 0 THEN o.total_price END), 0) AS total,
-            COALESCE(SUM(CASE WHEN o.anulada = 0 THEN o.igv END), 0) AS igv,
-            SUM(o.anulada = 1)                                   AS anuladas,
-            COALESCE(SUM(CASE WHEN o.anulada = 1 THEN o.total_price END), 0) AS total_anulado
+    "SELECT SUM(o.anulada = 0)                                                   AS compras,
+            COALESCE(SUM(CASE WHEN o.anulada = 0 THEN o.total_price END), 0)     AS total,
+            COALESCE(SUM(CASE WHEN o.anulada = 0 THEN o.igv END), 0)             AS igv,
+            SUM(o.anulada = 1)                                                   AS anuladas,
+            COALESCE(SUM(CASE WHEN o.anulada = 1 THEN o.total_price END), 0)     AS total_anulado
        FROM orders_purchase o
-      WHERE $enRango"
+      WHERE $where"
 );
-$resumen->execute($rango);
+$resumen->execute($params);
 $r = $resumen->fetch();
 $promedio = $r->compras ? $r->total / $r->compras : 0;
 
-$porPago = $connect->prepare(
-    "SELECT COALESCE(NULLIF(o.method, ''), 'Sin indicar') AS metodo, COUNT(*) AS compras, SUM(o.total_price) AS total
-       FROM orders_purchase o
-      WHERE $enRango AND o.anulada = 0
-      GROUP BY metodo
+$porProveedor = $connect->prepare(
+    "SELECT p.nomprv, COUNT(*) AS compras, SUM(o.total_price) AS total
+       FROM orders_purchase o INNER JOIN proveedores p ON p.idprov = o.idprov
+      WHERE $where AND o.anulada = 0
+      GROUP BY p.idprov, p.nomprv
       ORDER BY total DESC"
 );
-$porPago->execute($rango);
-$pagos = $porPago->fetchAll();
+$porProveedor->execute($params);
+$proveedoresTotal = $porProveedor->fetchAll();
 
 $filtroEstado = ['validas' => ' AND o.anulada = 0', 'anuladas' => ' AND o.anulada = 1', 'todas' => ''][$estado];
 $lista = $connect->prepare(
-    "SELECT o.idordpur, o.placed_on, o.tipc, o.serie_doc, o.numero_doc, p.nomprv, o.method, o.igv, o.total_price, o.anulada, o.motivo_anulacion,
-            u.nombre AS comprador
+    "SELECT o.idordpur, o.placed_on, o.tipc, o.serie_doc, o.numero_doc, o.fecha_emision, p.nomprv, o.method, o.igv, o.total_price,
+            o.anulada, o.motivo_anulacion, o.modificada_on, u.nombre AS comprador
        FROM orders_purchase o
        INNER JOIN proveedores p ON p.idprov = o.idprov
        LEFT JOIN usuarios u ON u.id = o.user_id
-      WHERE $enRango $filtroEstado
+      WHERE $where $filtroEstado
       ORDER BY o.placed_on DESC, o.idordpur DESC"
 );
-$lista->execute($rango);
+$lista->execute($params);
 $compras = $lista->fetchAll();
-
-$atajos = [
-    'Hoy'       => [$hoy, $hoy],
-    'Este mes'  => [date('Y-m-01'), $hoy],
-    'Este año'  => [date('Y-01-01'), $hoy],
-];
 
 $seccion = 'reportes';
 $migas = 'Reportes / Compras';
@@ -78,9 +82,32 @@ require __DIR__ . '/../layout/cabecera.php';
 
             <div class="page-content">
 
+                <?php pestanas_reportes('compras'); ?>
+
                 <form class="filtros" method="GET" action="">
                     <label>Desde <input type="date" name="desde" value="<?php echo e($desde); ?>" max="<?php echo e($hoy); ?>"></label>
                     <label>Hasta <input type="date" name="hasta" value="<?php echo e($hasta); ?>" max="<?php echo e($hoy); ?>"></label>
+                    <label>Proveedor
+                        <select name="proveedor">
+<?php foreach ($proveedores as $valor => $texto): ?>
+                            <option value="<?php echo e($valor); ?>"<?php echo (string)$valor === $idprov ? ' selected' : ''; ?>><?php echo e($texto); ?></option>
+<?php endforeach; ?>
+                        </select>
+                    </label>
+                    <label>Comprobante
+                        <select name="comprobante">
+<?php foreach ($comprobantes as $valor => $texto): ?>
+                            <option value="<?php echo e($valor); ?>"<?php echo $valor === $tipc ? ' selected' : ''; ?>><?php echo e($texto); ?></option>
+<?php endforeach; ?>
+                        </select>
+                    </label>
+                    <label>Forma de pago
+                        <select name="metodo">
+<?php foreach ($metodos as $valor => $texto): ?>
+                            <option value="<?php echo e($valor); ?>"<?php echo $valor === $metodo ? ' selected' : ''; ?>><?php echo e($texto); ?></option>
+<?php endforeach; ?>
+                        </select>
+                    </label>
                     <label>Estado
                         <select name="estado">
 <?php foreach ($estados as $valor => $texto): ?>
@@ -90,9 +117,8 @@ require __DIR__ . '/../layout/cabecera.php';
                     </label>
                     <button type="submit">Filtrar</button>
                     <span class="atajos">
-                        <a href="ventas.php">Reporte de ventas</a>
 <?php foreach ($atajos as $texto => [$d, $h]): ?>
-                        <a href="?desde=<?php echo $d; ?>&amp;hasta=<?php echo $h; ?>&amp;estado=<?php echo $estado; ?>"><?php echo $texto; ?></a>
+                        <a href="<?php echo url_atajo($d, $h); ?>"><?php echo $texto; ?></a>
 <?php endforeach; ?>
                     </span>
                 </form>
@@ -135,17 +161,17 @@ require __DIR__ . '/../layout/cabecera.php';
                     </div>
                 </div>
 
-<?php if ($pagos): ?>
+<?php if ($proveedoresTotal): ?>
                 <div class="records por-pago">
-                    <h3>Por forma de pago</h3>
+                    <h3>Por proveedor</h3>
                     <table width="100%">
                         <thead>
-                            <tr><th>Forma de pago</th><th>Compras</th><th>Total</th></tr>
+                            <tr><th>Proveedor</th><th>Compras</th><th>Total</th></tr>
                         </thead>
                         <tbody>
-<?php foreach ($pagos as $p): ?>
+<?php foreach ($proveedoresTotal as $p): ?>
                             <tr>
-                                <td><?php echo e($p->metodo); ?></td>
+                                <td><?php echo e($p->nomprv); ?></td>
                                 <td><?php echo (int)$p->compras; ?></td>
                                 <td>S/<?php echo number_format($p->total, 2); ?></td>
                             </tr>
@@ -165,15 +191,16 @@ require __DIR__ . '/../layout/cabecera.php';
                             <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th><span class="las la-sort"></span>Fecha</th>
+                                    <th><span class="las la-sort"></span>Registro</th>
                                     <th><span class="las la-sort"></span>Comprobante</th>
+                                    <th><span class="las la-sort"></span>Emisión</th>
                                     <th><span class="las la-sort"></span>Proveedor</th>
                                     <th><span class="las la-sort"></span>Comprador</th>
                                     <th><span class="las la-sort"></span>Pago</th>
                                     <th><span class="las la-sort"></span>IGV</th>
                                     <th><span class="las la-sort"></span>Total</th>
                                     <th><span class="las la-sort"></span>Estado</th>
-                                    <th>Comprobante</th>
+                                    <th>Ver</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -182,6 +209,7 @@ require __DIR__ . '/../layout/cabecera.php';
                                     <td><?php echo e($v->idordpur); ?></td>
                                     <td data-order="<?php echo e($v->placed_on); ?>"><?php echo date('d/m/Y H:i', strtotime($v->placed_on)); ?></td>
                                     <td><?php echo e($v->tipc); ?><?php echo !empty($v->serie_doc) ? ' ' . e($v->serie_doc . '-' . $v->numero_doc) : ''; ?></td>
+                                    <td><?php echo $v->fecha_emision ? date('d/m/Y', strtotime($v->fecha_emision)) : '—'; ?></td>
                                     <td><?php echo e($v->nomprv); ?></td>
                                     <td><?php echo e($v->comprador ?? '—'); ?></td>
                                     <td><?php echo e($v->method); ?></td>
@@ -190,7 +218,7 @@ require __DIR__ . '/../layout/cabecera.php';
 <?php if ((int)$v->anulada === 1): ?>
                                     <td><span class="estado-anulada" title="<?php echo e($v->motivo_anulacion); ?>">ANULADA</span></td>
 <?php else: ?>
-                                    <td>Válida</td>
+                                    <td>Válida<?php echo $v->modificada_on ? '<br><small>Modificada ' . date('d/m/Y', strtotime($v->modificada_on)) . '</small>' : ''; ?></td>
 <?php endif; ?>
                                     <td><a title="Comprobante" href="../compra/comprobante.php?id=<?php echo e($v->idordpur); ?>" class="fa fa-file-text-o tooltip"></a></td>
                                 </tr>
@@ -198,7 +226,7 @@ require __DIR__ . '/../layout/cabecera.php';
                             </tbody>
                         </table>
 <?php else: ?>
-                        <p class="sin-datos">No hay compras en este rango.</p>
+                        <p class="sin-datos">No hay compras con estos filtros.</p>
 <?php endif; ?>
                     </div>
                 </div>

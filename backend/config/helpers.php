@@ -2,7 +2,20 @@
 // funciones compartidas: escape de salida y csrf
 
 // opciones validas de los formularios de pago (ventas/compras checkout.php)
-const METODOS_PAGO = ['Contado', 'Tarjeta'];
+const METODOS_PAGO = ['Contado', 'Tarjeta', 'Yape', 'Plin', 'Transferencia'];
+// estos medios piden el numero de operacion
+const METODOS_CON_OPERACION = ['Yape', 'Plin', 'Transferencia'];
+
+// estados de la orden de garantia, en orden: clave => texto
+const GARANTIA_ESTADOS = [
+    'Ingresado'     => 'Ingresado / Recibido',
+    'Enviado'       => 'Enviado a marca / proveedor',
+    'En evaluacion' => 'En evaluación por la marca',
+    'Resuelto'      => 'Resuelto por la marca',
+    'Listo'         => 'Listo para entrega',
+    'Entregado'     => 'Completado / Entregado',
+];
+const GARANTIA_RESULTADOS = ['Reparado', 'Reemplazado', 'Rechazado'];
 // comprobantes de venta (ruc = factura, dni o sin dato = boleta)
 const COMPROBANTES = ['Boleta', 'Factura'];
 // boleta por mas de este monto pide el dni del comprador
@@ -62,6 +75,101 @@ function validar_ruc($numero)
 function formato_comprobante($serie, $numero)
 {
     return $serie . '-' . str_pad((string)$numero, 8, '0', STR_PAD_LEFT);
+}
+
+// pagos del checkout de ventas (pago_metodo[], pago_monto[], pago_operacion[]);
+// la suma tiene que ser el total. Devuelve la lista o null y deja el motivo en $error
+function leer_pagos($total, &$error)
+{
+    $metodos     = (array)($_POST['pago_metodo'] ?? []);
+    $montos      = (array)($_POST['pago_monto'] ?? []);
+    $operaciones = (array)($_POST['pago_operacion'] ?? []);
+    $pagos = [];
+    $suma  = 0;
+
+    foreach ($metodos as $i => $metodo) {
+        $metodo = trim((string)$metodo);
+        $monto  = round((float)str_replace(',', '.', (string)($montos[$i] ?? '')), 2);
+        $op     = strtoupper(trim((string)($operaciones[$i] ?? '')));
+
+        if ($metodo === '' && $monto == 0) {
+            continue;   // fila vacia
+        }
+        if (!in_array($metodo, METODOS_PAGO, true)) {
+            $error = 'Elige el medio de cada pago.';
+            return null;
+        }
+        if ($monto <= 0) {
+            $error = 'Cada pago debe tener un monto mayor a cero.';
+            return null;
+        }
+        if (in_array($metodo, METODOS_CON_OPERACION, true)) {
+            if (!preg_match('/^[A-Z0-9-]{4,30}$/', $op)) {
+                $error = 'Ingresa el número de operación del pago con ' . $metodo . ' (4 a 30 letras o números).';
+                return null;
+            }
+        } else {
+            $op = null;
+        }
+
+        $pagos[] = ['metodo' => $metodo, 'monto' => $monto, 'num_operacion' => $op];
+        $suma += $monto;
+    }
+
+    if (!$pagos) {
+        $error = 'Agrega al menos un pago.';
+        return null;
+    }
+    if (abs(round($suma, 2) - round((float)$total, 2)) >= 0.01) {
+        $error = 'Los pagos suman S/ ' . number_format($suma, 2) . ' y el total es S/ ' . number_format($total, 2) . '.';
+        return null;
+    }
+    return $pagos;
+}
+
+// lo que se guarda en orders.method: el medio si es uno solo, "Mixto" si son varios
+function resumen_metodo($pagos)
+{
+    $distintos = array_unique(array_column($pagos, 'metodo'));
+    return count($distintos) === 1 ? reset($distintos) : 'Mixto';
+}
+
+// anula una venta dentro de una transaccion ya abierta: devuelve el stock al
+// inventario (con su movimiento en el kardex) y la marca anulada.
+// Devuelve cuantas lineas de detalle tenia (0 = venta antigua sin detalle)
+function anular_venta_tx($connect, $idord, $motivo, $user_id)
+{
+    $detalle = $connect->prepare('SELECT idprod, cantidad FROM orders_detalle WHERE idord = ?');
+    $detalle->execute([$idord]);
+    $lineas = $detalle->fetchAll(PDO::FETCH_ASSOC);
+
+    $devolver = $connect->prepare('UPDATE productos SET stock = stock + ? WHERE idprod = ?');
+    foreach ($lineas as $linea) {
+        $devolver->execute([(int)$linea['cantidad'], (int)$linea['idprod']]);
+        registrar_movimiento($connect, (int)$linea['idprod'], $user_id, 'Anulacion', (int)$linea['cantidad'], $idord);
+    }
+
+    $connect->prepare(
+        "UPDATE orders
+            SET anulada = 1, anulada_on = NOW(), motivo_anulacion = ?, payment_status = 'Anulado'
+          WHERE idord = ?"
+    )->execute([mb_substr($motivo, 0, 255), $idord]);
+
+    return count($lineas);
+}
+
+// ej: GAR-000001
+function formato_garantia($idgar)
+{
+    return 'GAR-' . str_pad((string)$idgar, 6, '0', STR_PAD_LEFT);
+}
+
+// siguiente estado de la orden de garantia, null si ya se entrego
+function garantia_siguiente_estado($estado)
+{
+    $claves = array_keys(GARANTIA_ESTADOS);
+    $i = array_search($estado, $claves, true);
+    return ($i === false || $i === count($claves) - 1) ? null : $claves[$i + 1];
 }
 
 function e($valor)

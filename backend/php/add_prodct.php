@@ -16,6 +16,7 @@ if (isset($_POST['add_prodct'])) {
     $precio = filter_input(INPUT_POST, 'prdprec', FILTER_VALIDATE_FLOAT);
     $stock  = filter_input(INPUT_POST, 'prdstco', FILTER_VALIDATE_INT);
     $peso   = filter_input(INPUT_POST, 'prdpes', FILTER_VALIDATE_FLOAT);
+    $garantia = filter_input(INPUT_POST, 'prdgar', FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 120]]);
     $idmar  = filter_input(INPUT_POST, 'prdmarc', FILTER_VALIDATE_INT);
     $idcate = filter_input(INPUT_POST, 'prdcate', FILTER_VALIDATE_INT);
 
@@ -52,12 +53,12 @@ if (isset($_POST['add_prodct'])) {
     try {
         $stmt = $connect->prepare(
             'INSERT INTO productos
-                (codpro, nomprd, desprd, foto, precio, stock, idmar, idcate, modelo, peso, state)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)'
+                (codpro, nomprd, desprd, foto, precio, stock, garantia_meses, idmar, idcate, modelo, peso, state)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)'
         );
 
         $stmt->execute([
-            $codpro, $nomprd, $desprd, $foto ?? '', $precio, $stock,
+            $codpro, $nomprd, $desprd, $foto ?? '', $precio, $stock, $garantia === false || $garantia === null ? 12 : $garantia,
             $idmar, $idcate, $modelo, $peso ?: 0,
         ]);
 

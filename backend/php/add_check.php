@@ -10,13 +10,14 @@ if (isset($_POST['order'])) {
 
     // el user_id sale de la sesion, no del form
     $user_id  = (int)$_SESSION['id'];
-    $method   = trim($_POST['cxtcre'] ?? '');
     $doc_tipo = strtoupper(trim($_POST['doctipo'] ?? ''));          // '', DNI o RUC
     $doc_num  = preg_replace('/\s+/', '', (string)($_POST['docnum'] ?? ''));
     $nombre   = mb_substr(trim($_POST['nomcl'] ?? ''), 0, 150);
 
-    if (!in_array($method, METODOS_PAGO, true)) {
-        avisar_y_redirigir('Faltan datos', 'Indica el método de pago.', 'warning', 'checkout.php');
+    // "Modificar venta": la venta original se anula y esta la reemplaza
+    $reemplaza = isset($_SESSION['modifica_venta']) ? (int)$_SESSION['modifica_venta']['idord'] : 0;
+    if ($reemplaza && !puede('ventas_anular')) {
+        avisar_y_redirigir('Sin permiso', 'Solo el administrador puede modificar ventas.', 'error', 'mostrar.php');
         return;
     }
 
@@ -43,9 +44,26 @@ if (isset($_POST['order'])) {
     try {
         $connect->beginTransaction();
 
-        // FOR UPDATE para que no se pisen dos ventas del mismo producto
+        // primero se anula la venta que se reemplaza, asi su stock vuelve antes de validar el nuevo
+        $original = null;
+        if ($reemplaza) {
+            $buscar = $connect->prepare('SELECT idord, anulada, serie, numero FROM orders WHERE idord = ? FOR UPDATE');
+            $buscar->execute([$reemplaza]);
+            $original = $buscar->fetch();
+
+            if (!$original || (int)$original->anulada === 1) {
+                $connect->rollBack();
+                unset($_SESSION['modifica_venta']);
+                avisar_y_redirigir('No se puede modificar', 'La venta original ya no existe o ya fue anulada.', 'error', 'mostrar.php');
+                return;
+            }
+            anular_venta_tx($connect, $reemplaza, 'Modificada: reemplazada por otra venta', $user_id);
+        }
+
+        // FOR UPDATE para que no se pisen dos ventas del mismo producto;
+        // se cobra el precio guardado en el carrito (en una modificacion, el de la venta original)
         $consulta = $connect->prepare(
-            'SELECT c.idv, c.idprod, c.quantity, p.nomprd, p.precio, p.stock
+            'SELECT c.idv, c.idprod, c.quantity, c.price AS precio, p.nomprd, p.stock
                FROM cart c
                INNER JOIN productos p ON c.idprod = p.idprod
               WHERE c.user_id = ?
@@ -86,6 +104,15 @@ if (isset($_POST['order'])) {
         $total = round($total, 2);
         list($base, $igv) = igv_desglosar($total);
 
+        // pagos: uno o varios medios, la suma tiene que ser el total
+        $errorPago = '';
+        $pagos = leer_pagos($total, $errorPago);
+        if ($pagos === null) {
+            $connect->rollBack();
+            avisar_y_redirigir('Revisa los pagos', $errorPago, 'warning', 'checkout.php');
+            return;
+        }
+
         // boleta de mas de S/ 700 pide el dni
         if ($doc_tipo === '' && $total > LIMITE_BOLETA_SIN_DNI) {
             $connect->rollBack();
@@ -124,6 +151,9 @@ if (isset($_POST['order'])) {
                 $idcli = (int)$connect->lastInsertId();
                 $nomcl = $nombre;
             }
+        } elseif ($nombre !== '') {
+            // boleta sin documento: se guarda el nombre que se escribio
+            $nomcl = $nombre;
         }
 
         // serie y numero del comprobante, la fila se bloquea para que no se repita
@@ -142,17 +172,23 @@ if (isset($_POST['order'])) {
 
         $insertar = $connect->prepare(
             'INSERT INTO orders (user_id, idcli, nomcl, method, total_products, total_price, subtotal_sin_igv, igv,
-                                 placed_on, payment_status, tipc, idserie, serie, numero, doc_tipo, doc_num)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?)'
+                                 placed_on, payment_status, reemplaza_a, tipc, idserie, serie, numero, doc_tipo, doc_num)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?)'
         );
         $insertar->execute([
-            $user_id, $idcli, $nomcl, $method, implode(', ', $resumen), $total, $base, $igv,
-            'Aceptado', $tipc, $serieFila->idserie, $serieFila->serie, $numero,
+            $user_id, $idcli, $nomcl, resumen_metodo($pagos), implode(', ', $resumen), $total, $base, $igv,
+            'Aceptado', $reemplaza ?: null, $tipc, $serieFila->idserie, $serieFila->serie, $numero,
             $doc_tipo !== '' ? $doc_tipo : null,
             $doc_tipo !== '' ? $doc_num : null,
         ]);
 
         $idord = (int)$connect->lastInsertId();
+        $comprobante = formato_comprobante($serieFila->serie, $numero);
+
+        $guardarPago = $connect->prepare('INSERT INTO orders_pagos (idord, metodo, monto, num_operacion) VALUES (?, ?, ?, ?)');
+        foreach ($pagos as $pago) {
+            $guardarPago->execute([$idord, $pago['metodo'], $pago['monto'], $pago['num_operacion']]);
+        }
 
         $detalle = $connect->prepare(
             'INSERT INTO orders_detalle (idord, idprod, nombre, precio, cantidad, subtotal)
@@ -184,16 +220,21 @@ if (isset($_POST['order'])) {
             registrar_movimiento($connect, $item['idprod'], $user_id, 'Venta', -(int)$item['quantity'], $idord);
         }
 
+        if ($original) {
+            $connect->prepare('UPDATE orders SET motivo_anulacion = ? WHERE idord = ?')
+                    ->execute(['Modificada: reemplazada por la venta ' . $comprobante, $reemplaza]);
+        }
+
         $connect->prepare('DELETE FROM cart WHERE user_id = ?')->execute([$user_id]);
 
         $connect->commit();
+        unset($_SESSION['modifica_venta']);
 
-        avisar_y_redirigir(
-            $tipc . ' registrada',
-            'Comprobante ' . formato_comprobante($serieFila->serie, $numero) . '. El stock quedó actualizado.',
-            'success',
-            'mostrar.php'
-        );
+        $texto = 'Comprobante ' . $comprobante . '. El stock quedó actualizado.';
+        if ($original) {
+            $texto = 'Se anuló la venta ' . formato_comprobante($original->serie, $original->numero) . ' y se emitió ' . $comprobante . ' en su reemplazo.';
+        }
+        avisar_y_redirigir($tipc . ' registrada', $texto, 'success', 'mostrar.php');
 
     } catch (PDOException $e) {
         if ($connect->inTransaction()) {

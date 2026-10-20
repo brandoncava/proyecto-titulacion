@@ -58,6 +58,8 @@ require __DIR__ . '/../layout/cabecera.php';
 
     <label for="email"><b>Peso del producto</b></label><span class="badge-warning">*</span>
     <input type="text" placeholder="ejm: 20kg" name="prdpes"  required>
+    <label for="prdgar"><b>Meses de garantía de la marca</b></label><span class="badge-warning">*</span>
+    <input type="number" id="prdgar" name="prdgar" min="0" max="120" value="12" required>
 
     <label for="email"><b>Foto del producto</b></label><span class="badge-warning">*</span>
     <div class="upload-box">

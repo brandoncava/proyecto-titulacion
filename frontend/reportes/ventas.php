@@ -6,68 +6,59 @@ requiere_permiso('reportes');
 
 require '../../backend/config/Conexion.php';
 
-// fecha Y-m-d valida o el valor por defecto
-function fecha_get($campo, $defecto)
-{
-    $v = $_GET[$campo] ?? '';
-    $f = DateTime::createFromFormat('Y-m-d', $v);
-    return ($f && $f->format('Y-m-d') === $v) ? $v : $defecto;
-}
-
-$hoy   = date('Y-m-d');
-$desde = fecha_get('desde', date('Y-01-01'));
-$hasta = fecha_get('hasta', $hoy);
-if ($desde > $hasta) {
-    [$desde, $hasta] = [$hasta, $desde];
-}
+require __DIR__ . '/comun.php';
 
 $estados = ['validas' => 'Solo válidas', 'anuladas' => 'Solo anuladas', 'todas' => 'Todas'];
-$estado  = array_key_exists($_GET['estado'] ?? '', $estados) ? $_GET['estado'] : 'validas';
+$estado  = opcion_get('estado', $estados, 'validas');
 
-// el rango incluye el dia "hasta" completo
-$rango = ['desde' => $desde . ' 00:00:00', 'hasta' => date('Y-m-d', strtotime($hasta . ' +1 day')) . ' 00:00:00'];
-$enRango = 'o.placed_on >= :desde AND o.placed_on < :hasta';
+$metodos = ['' => 'Todos'] + array_combine(METODOS_PAGO, METODOS_PAGO);
+$metodo  = opcion_get('metodo', $metodos, '');
+
+// filtros comunes; el medio de pago: ventas que tienen al menos un pago con ese medio
+$where  = 'o.placed_on >= :desde AND o.placed_on < :hasta';
+$params = $rango;
+if ($metodo !== '') {
+    $where .= ' AND EXISTS (SELECT 1 FROM orders_pagos pg WHERE pg.idord = o.idord AND pg.metodo = :metodo)';
+    $params['metodo'] = $metodo;
+}
 
 $resumen = $connect->prepare(
-    "SELECT SUM(o.anulada = 0)                                   AS ventas,
-            COALESCE(SUM(CASE WHEN o.anulada = 0 THEN o.total_price END), 0) AS total,
-            COALESCE(SUM(CASE WHEN o.anulada = 0 THEN o.igv END), 0) AS igv,
-            SUM(o.anulada = 1)                                   AS anuladas,
-            COALESCE(SUM(CASE WHEN o.anulada = 1 THEN o.total_price END), 0) AS total_anulado
+    "SELECT SUM(o.anulada = 0)                                                   AS ventas,
+            COALESCE(SUM(CASE WHEN o.anulada = 0 THEN o.total_price END), 0)     AS total,
+            COALESCE(SUM(CASE WHEN o.anulada = 0 THEN o.igv END), 0)             AS igv,
+            SUM(o.anulada = 1)                                                   AS anuladas,
+            COALESCE(SUM(CASE WHEN o.anulada = 1 THEN o.total_price END), 0)     AS total_anulado
        FROM orders o
-      WHERE $enRango"
+      WHERE $where"
 );
-$resumen->execute($rango);
+$resumen->execute($params);
 $r = $resumen->fetch();
 $promedio = $r->ventas ? $r->total / $r->ventas : 0;
 
+// por medio de pago: suma lo cobrado con cada medio (un pago mixto se reparte)
 $porPago = $connect->prepare(
-    "SELECT COALESCE(NULLIF(o.method, ''), 'Sin indicar') AS metodo, COUNT(*) AS ventas, SUM(o.total_price) AS total
-       FROM orders o
-      WHERE $enRango AND o.anulada = 0
-      GROUP BY metodo
+    "SELECT pg.metodo, COUNT(DISTINCT o.idord) AS ventas, SUM(pg.monto) AS total
+       FROM orders o INNER JOIN orders_pagos pg ON pg.idord = o.idord
+      WHERE $where AND o.anulada = 0
+      GROUP BY pg.metodo
       ORDER BY total DESC"
 );
-$porPago->execute($rango);
+$porPago->execute($params);
 $pagos = $porPago->fetchAll();
 
 $filtroEstado = ['validas' => ' AND o.anulada = 0', 'anuladas' => ' AND o.anulada = 1', 'todas' => ''][$estado];
 $lista = $connect->prepare(
     "SELECT o.idord, o.placed_on, o.tipc, o.serie, o.numero, o.nomcl, o.method, o.igv, o.total_price, o.anulada, o.motivo_anulacion,
-            u.nombre AS vendedor
+            u.nombre AS vendedor,
+            (SELECT GROUP_CONCAT(CONCAT(pg.metodo, IF(pg.num_operacion IS NULL, '', CONCAT(' #', pg.num_operacion))) SEPARATOR ', ')
+               FROM orders_pagos pg WHERE pg.idord = o.idord) AS detalle_pago
        FROM orders o
        LEFT JOIN usuarios u ON u.id = o.user_id
-      WHERE $enRango $filtroEstado
+      WHERE $where $filtroEstado
       ORDER BY o.placed_on DESC, o.idord DESC"
 );
-$lista->execute($rango);
+$lista->execute($params);
 $ventas = $lista->fetchAll();
-
-$atajos = [
-    'Hoy'       => [$hoy, $hoy],
-    'Este mes'  => [date('Y-m-01'), $hoy],
-    'Este año'  => [date('Y-01-01'), $hoy],
-];
 
 $seccion = 'reportes';
 $migas = 'Reportes / Ventas';
@@ -76,6 +67,8 @@ require __DIR__ . '/../layout/cabecera.php';
 ?>
 
             <div class="page-content">
+
+                <?php pestanas_reportes('ventas'); ?>
 
                 <form class="filtros" method="GET" action="">
                     <label>Desde <input type="date" name="desde" value="<?php echo e($desde); ?>" max="<?php echo e($hoy); ?>"></label>
@@ -87,11 +80,17 @@ require __DIR__ . '/../layout/cabecera.php';
 <?php endforeach; ?>
                         </select>
                     </label>
+                    <label>Medio de pago
+                        <select name="metodo">
+<?php foreach ($metodos as $valor => $texto): ?>
+                            <option value="<?php echo e($valor); ?>"<?php echo $valor === $metodo ? ' selected' : ''; ?>><?php echo e($texto); ?></option>
+<?php endforeach; ?>
+                        </select>
+                    </label>
                     <button type="submit">Filtrar</button>
                     <span class="atajos">
-                        <a href="compras.php">Reporte de compras</a>
 <?php foreach ($atajos as $texto => [$d, $h]): ?>
-                        <a href="?desde=<?php echo $d; ?>&amp;hasta=<?php echo $h; ?>&amp;estado=<?php echo $estado; ?>"><?php echo $texto; ?></a>
+                        <a href="<?php echo url_atajo($d, $h); ?>"><?php echo $texto; ?></a>
 <?php endforeach; ?>
                     </span>
                 </form>
@@ -136,7 +135,7 @@ require __DIR__ . '/../layout/cabecera.php';
 
 <?php if ($pagos): ?>
                 <div class="records por-pago">
-                    <h3>Por forma de pago</h3>
+                    <h3>Cobrado por medio de pago</h3>
                     <table width="100%">
                         <thead>
                             <tr><th>Forma de pago</th><th>Ventas</th><th>Total</th></tr>
@@ -183,7 +182,7 @@ require __DIR__ . '/../layout/cabecera.php';
                                     <td><?php echo e($v->tipc); ?><?php echo !empty($v->serie) ? ' ' . e(formato_comprobante($v->serie, $v->numero)) : ''; ?></td>
                                     <td><?php echo e($v->nomcl); ?></td>
                                     <td><?php echo e($v->vendedor ?? '—'); ?></td>
-                                    <td><?php echo e($v->method); ?></td>
+                                    <td><?php echo e($v->detalle_pago ?: $v->method); ?></td>
                                     <td>S/<?php echo number_format($v->igv, 2); ?></td>
                                     <td data-order="<?php echo e($v->total_price); ?>">S/<?php echo number_format($v->total_price, 2); ?></td>
 <?php if ((int)$v->anulada === 1): ?>

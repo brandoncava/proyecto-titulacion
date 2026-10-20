@@ -11,6 +11,7 @@ require __DIR__ . '/../layout/cabecera.php';
 ?>
             
             <div class="page-content">
+<?php $modifica = $_SESSION['modifica_venta'] ?? null; if ($modifica) { include __DIR__ . '/aviso_modificacion.php'; } ?>
             
             <div class="records table-responsive">
                      
@@ -34,8 +35,9 @@ require __DIR__ . '/../layout/cabecera.php';
         <?php 
 require '../../backend/config/Conexion.php';
 $grand_total = 0;
-$select_cart = $connect->prepare("SELECT cart.idv, usuarios.id, usuarios.nombre, productos.precio,productos.stock,productos.foto,productos.idprod, productos.codpro, productos.nomprd, cart.name, cart.price, cart.quantity FROM cart INNER JOIN usuarios ON cart.user_id = usuarios.id INNER JOIN productos ON cart.idprod = productos.idprod;");
- $select_cart->execute();
+// solo el carrito del usuario, con el precio guardado al agregar
+$select_cart = $connect->prepare("SELECT cart.idv, productos.stock, productos.idprod, productos.codpro, productos.nomprd, cart.name, cart.price, cart.quantity FROM cart INNER JOIN productos ON cart.idprod = productos.idprod WHERE cart.user_id = ?");
+ $select_cart->execute([$_SESSION['id']]);
  if($select_cart->rowCount() > 0){
          while($fetch_cart = $select_cart->fetch(PDO::FETCH_ASSOC)){ 
      ?>
@@ -43,7 +45,7 @@ $select_cart = $connect->prepare("SELECT cart.idv, usuarios.id, usuarios.nombre,
    
          <td><h4><?php echo e($fetch_cart['codpro']); ?></h4></td>
          <td><h4><?php echo e($fetch_cart['nomprd']); ?></h4></td>
-         <td><h4>S/<?php echo number_format($fetch_cart['precio'],2) ?></h4></td>
+         <td><h4>S/<?php echo number_format($fetch_cart['price'],2) ?></h4></td>
          <td><h4><?php echo e($fetch_cart['stock']); ?></h4></td>
         <td>
     <form action="" method="POST">
@@ -55,7 +57,7 @@ $select_cart = $connect->prepare("SELECT cart.idv, usuarios.id, usuarios.nombre,
     <button type="submit" name="update_qty" class="btn btn-primary" style="cursor: pointer;"> <i class="fa fa-refresh"></i></button>
     </form>    
         </td>
-        <td><h4>S/<?= number_format($sub_total = ($fetch_cart['precio'] * $fetch_cart['quantity']),2); ?></h4></td>
+        <td><h4>S/<?= number_format($sub_total = ($fetch_cart['price'] * $fetch_cart['quantity']),2); ?></h4></td>
     <td style="width:260px;">
     <a title="Eliminar" onclick="return confirm('Eliminar del carrito?');" href="../ventas/eliminar.php?id=<?php echo e($fetch_cart['idv']); ?>" class="fa fa-trash"></a>                            
     </td>

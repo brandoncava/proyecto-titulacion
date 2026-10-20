@@ -67,17 +67,7 @@ if($sentencia){
                                     <td><h4><?php echo e($d->total_products); ?></h4></td>
         <td>
             
-            <a title="<?php echo e($d->tipc); ?>" href="../ventas/boleta.php?id=<?php echo e($d->idord); ?>" class="fa fa-file-text-o tooltip"></a>
-            <?php if ((int)$d->anulada === 1): ?>
-                <span style="color:#B42318;font-weight:bold;margin-left:6px;">ANULADA</span>
-            <?php elseif (puede('ventas_anular')): ?>
-                <form method="POST" action="" style="display:inline" onsubmit="return anularVenta(this);">
-                    <?php echo csrf_campo(); ?>
-                    <input type="hidden" name="idord" value="<?php echo e($d->idord); ?>">
-                    <input type="hidden" name="motivo" value="">
-                    <button type="submit" name="anular_venta" title="Anular venta" class="fa fa-ban" style="border:none;background:#B42318;color:#fff;cursor:pointer;padding:6px 9px;border-radius:4px;margin-left:6px;"></button>
-                </form>
-            <?php endif; ?>
+            <?php include __DIR__ . '/acciones_venta.php'; ?>
         </td>
                     
                                    
@@ -112,5 +102,6 @@ function anularVenta(form){
 }
 </script>
 <?php include_once '../../backend/php/anular_venta.php'; ?>
+<?php include_once '../../backend/php/modificar_venta.php'; ?>
 </body>
 </html>

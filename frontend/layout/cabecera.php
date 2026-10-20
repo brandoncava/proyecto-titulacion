@@ -23,6 +23,7 @@ $MENU = [
     'ventas'      => ['ventas',      'ventas/venta.php',             'la-money-bill',    'Ventas'],
     'compras'     => ['compras',     'compra/mostrar.php',           'la-store',         'Compras'],
     'series'      => ['series',      'series/mostrar.php',           'la-file-invoice',  'Series'],
+    'garantias'   => ['garantias',   'garantias/mostrar.php',        'la-tools',         'Garantías'],
     'reportes'    => ['reportes',    'reportes/ventas.php',          'la-chart-bar',     'Reportes'],
 ];
 ?>

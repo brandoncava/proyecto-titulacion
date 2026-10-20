@@ -41,26 +41,8 @@ if (isset($_POST['anular_venta'])) {
             return;
         }
 
-        // devuelve el stock, solo si la venta tiene detalle guardado
-        $detalle = $connect->prepare('SELECT idprod, cantidad FROM orders_detalle WHERE idord = ?');
-        $detalle->execute([$idord]);
-        $lineas = $detalle->fetchAll(PDO::FETCH_ASSOC);
-
-        $devolver = $connect->prepare('UPDATE productos SET stock = stock + ? WHERE idprod = ?');
-        foreach ($lineas as $linea) {
-            $devolver->execute([(int)$linea['cantidad'], (int)$linea['idprod']]);
-            registrar_movimiento($connect, (int)$linea['idprod'], (int)$_SESSION['id'], 'Anulacion', (int)$linea['cantidad'], $idord);
-        }
-
-        $anular = $connect->prepare(
-            "UPDATE orders
-                SET anulada = 1,
-                    anulada_on = NOW(),
-                    motivo_anulacion = ?,
-                    payment_status = 'Anulado'
-              WHERE idord = ?"
-        );
-        $anular->execute([$motivo, $idord]);
+        // devuelve el stock (si la venta tiene detalle) y la marca anulada
+        $lineas = anular_venta_tx($connect, $idord, $motivo, (int)$_SESSION['id']);
 
         $connect->commit();
 
