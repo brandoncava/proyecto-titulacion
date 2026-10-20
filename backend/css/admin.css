@@ -1669,3 +1669,36 @@ header {
     border-color: #D92D20;
     background: #fef3f2;
 }
+
+/* boton "Accesos" en la esquina superior derecha */
+.btn-cabecera {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    background: #fff;
+    color: #344054;
+    font-size: .85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: border-color 150ms, color 150ms, background 150ms;
+}
+.btn-cabecera span.las {
+    font-size: 1.2rem;
+}
+.btn-cabecera:hover {
+    border-color: var(--main-color);
+    color: var(--main-color);
+    background: #f4ebff;
+}
+.btn-cabecera.activo {
+    background: var(--main-color);
+    border-color: var(--main-color);
+    color: #fff;
+}
+@media screen and (max-width: 600px) {
+    .btn-cabecera .texto { display: none; }
+    .btn-cabecera { padding: 7px 9px; }
+}

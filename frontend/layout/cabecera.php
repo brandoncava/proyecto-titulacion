@@ -17,7 +17,6 @@ $MENU = [
     'productos'   => ['productos',   'productos/mostrar.php',        'la-shopping-cart', 'Productos'],
     'categorias'  => ['catalogos',   'categorias/mostrar.php',       'la-paperclip',     'Categorias'],
     'marcas'      => ['catalogos',   'marcas/mostrar.php',           'la-tags',          'Marcas'],
-    'accesos'     => ['usuarios',    'accesos/mostrar.php',          'la-user-friends',  'Accesos'],
     'clientes'    => ['clientes',    'clientes/mostrar.php',         'la-user-friends',  'Clientes'],
     'proveedores' => ['proveedores', 'proveedores/mostrar.php',      'la-user-friends',  'Proveedores'],
     'ventas'      => ['ventas',      'ventas/venta.php',             'la-money-bill',    'Ventas'],
@@ -128,6 +127,14 @@ $MENU = [
                     <h1>Bienvenido <strong><?php echo e($_SESSION['nombre']); ?></strong></h1>
                     <small>Home / <?php echo e($migas); ?></small>
                 </div>
+<?php if (puede('usuarios')): ?>
+
+                <!-- usuarios del sistema: configuracion, va aparte del menu de trabajo -->
+                <a href="../accesos/mostrar.php" class="btn-cabecera<?php echo $seccion === 'accesos' ? ' activo' : ''; ?>" title="Usuarios y accesos del sistema">
+                    <span class="las la-user-shield"></span>
+                    <span class="texto">Accesos</span>
+                </a>
+<?php endif; ?>
 
             </div>
         </header>
