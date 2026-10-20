@@ -105,3 +105,31 @@
 @media screen and (max-width: 600px) {
     .records .dataTables_wrapper { padding: 1rem; }
 }
+
+/* ---------- Botones de exportar y buscador con el mismo estilo del sistema ---------- */
+.dataTables_wrapper .dt-buttons .dt-button {
+    background: #fff !important;
+    border: 1px solid #d0d5dd !important;
+    border-radius: 8px !important;
+    color: #344054 !important;
+    padding: 7px 14px !important;
+    margin-right: 6px !important;
+    font-size: .85rem;
+    box-shadow: none !important;
+    transition: border-color 150ms, color 150ms, background 150ms;
+}
+.dataTables_wrapper .dt-buttons .dt-button:hover:not(.disabled) {
+    border-color: var(--main-color) !important;
+    color: var(--main-color) !important;
+    background: #f4ebff !important;
+}
+.dataTables_wrapper .dataTables_filter input {
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+}
+.dataTables_wrapper .dataTables_filter input:focus {
+    border-color: var(--main-color);
+    box-shadow: 0 0 0 3px rgba(108, 43, 217, .12);
+}
