@@ -59,6 +59,26 @@ require __DIR__ . '/../layout/cabecera.php';
                         <section class="tarjeta-form">
                             <h2><span class="las la-user"></span> Cliente</h2>
 
+                            <!-- buscador de clientes registrados -->
+                            <div id="zona-buscar">
+                                <label for="buscar-cliente">Buscar cliente registrado</label>
+                                <div class="buscador-cliente">
+                                    <span class="las la-search"></span>
+                                    <input type="text" id="buscar-cliente" placeholder="Escribe DNI, RUC o nombre..." autocomplete="off">
+                                    <ul id="resultados-cliente" class="resultados-cliente" hidden></ul>
+                                </div>
+                                <p class="separador-o"><span>o ingresa los datos de un cliente nuevo</span></p>
+                            </div>
+
+                            <div id="cliente-elegido" class="cliente-elegido" hidden>
+                                <span class="las la-user-check"></span>
+                                <div>
+                                    <b id="ce-nombre"></b>
+                                    <small id="ce-doc"></small>
+                                </div>
+                                <button type="button" id="quitar-cliente" class="btn-secundario">Cambiar</button>
+                            </div>
+
                             <div class="fila-campos">
                                 <div>
                                     <label for="doctipo">Documento</label>
@@ -77,6 +97,7 @@ require __DIR__ . '/../layout/cabecera.php';
                             <label for="nomcl">Nombre o razón social</label>
                             <input type="text" name="nomcl" id="nomcl" maxlength="150" value="<?php echo e($modifica['nomcl'] ?? ''); ?>" placeholder="Solo si el cliente es nuevo; si ya existe se usa el registrado">
 
+                            <p class="nota" id="estado-cliente" hidden></p>
                             <p class="nota" id="aviso-comprobante"></p>
                         </section>
 
@@ -172,6 +193,110 @@ require __DIR__ . '/../layout/cabecera.php';
         num.addEventListener('input', function () { num.value = num.value.replace(/\D/g, ''); });
         tipo.addEventListener('change', actualizarDoc);
         actualizarDoc();
+
+        // ---- cliente registrado o nuevo ----
+        var URL_BUSCAR = '../../backend/php/buscar_cliente.php';
+        var nom = document.getElementById('nomcl');
+        var buscador = document.getElementById('buscar-cliente');
+        var lista = document.getElementById('resultados-cliente');
+        var zonaBuscar = document.getElementById('zona-buscar');
+        var elegido = document.getElementById('cliente-elegido');
+        var estadoCli = document.getElementById('estado-cliente');
+        var espera = null;
+
+        function textoDoc(c) { return c.nudoc ? (c.tipd || 'Doc.') + ' ' + c.nudoc : 'Sin documento'; }
+
+        function mostrarEstado(html, clase) {
+            estadoCli.hidden = !html;
+            estadoCli.className = 'nota ' + (clase || '');
+            estadoCli.innerHTML = html || '';
+        }
+
+        // deja elegido un cliente de la base: llena y bloquea documento y nombre
+        function elegirCliente(c) {
+            tipo.value = (c.tipd === 'RUC') ? 'RUC' : 'DNI';
+            actualizarDoc();
+            num.value = c.nudoc;
+            nom.value = c.nombre;
+            num.readOnly = nom.readOnly = true;
+            document.getElementById('ce-nombre').textContent = c.nombre;
+            document.getElementById('ce-doc').textContent = 'Cliente registrado · ' + textoDoc(c) + (c.telfcl ? ' · Tel. ' + c.telfcl : '');
+            elegido.hidden = false;
+            zonaBuscar.hidden = true;
+            lista.hidden = true;
+            mostrarEstado('');
+        }
+
+        function quitarCliente() {
+            num.readOnly = nom.readOnly = false;
+            num.value = nom.value = buscador.value = '';
+            tipo.value = '';
+            actualizarDoc();
+            elegido.hidden = true;
+            zonaBuscar.hidden = false;
+            mostrarEstado('');
+            buscador.focus();
+        }
+        document.getElementById('quitar-cliente').addEventListener('click', quitarCliente);
+        tipo.addEventListener('change', function () { if (!elegido.hidden) { quitarCliente(); } });
+
+        // resultados mientras se escribe
+        buscador.addEventListener('input', function () {
+            clearTimeout(espera);
+            var q = buscador.value.trim();
+            if (q.length < 2) { lista.hidden = true; return; }
+            espera = setTimeout(function () {
+                fetch(URL_BUSCAR + '?q=' + encodeURIComponent(q), { credentials: 'same-origin' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (clientes) {
+                        lista.innerHTML = '';
+                        if (!clientes.length) {
+                            var li = document.createElement('li');
+                            li.className = 'sin-resultados';
+                            li.innerHTML = '<span class="las la-user-plus"></span> No está registrado. Ingresa sus datos abajo como cliente nuevo.';
+                            lista.appendChild(li);
+                        }
+                        clientes.forEach(function (c) {
+                            var li = document.createElement('li');
+                            li.tabIndex = 0;
+                            li.innerHTML = '<b></b><small></small>';
+                            li.querySelector('b').textContent = c.nombre;
+                            li.querySelector('small').textContent = textoDoc(c);
+                            li.addEventListener('click', function () { elegirCliente(c); });
+                            li.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); elegirCliente(c); } });
+                            lista.appendChild(li);
+                        });
+                        lista.hidden = false;
+                    });
+            }, 250);
+        });
+        buscador.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); var p = lista.querySelector('li[tabindex]'); if (p) { p.click(); } }
+            if (e.key === 'Escape') { lista.hidden = true; }
+        });
+        document.addEventListener('click', function (e) { if (!e.target.closest('.buscador-cliente')) { lista.hidden = true; } });
+
+        // al completar un DNI/RUC escrito a mano se avisa si el cliente ya existe
+        num.addEventListener('input', function () {
+            if (num.readOnly) { return; }
+            var completo = (tipo.value === 'DNI' && num.value.length === 8) || (tipo.value === 'RUC' && num.value.length === 11);
+            if (!completo) { mostrarEstado(''); nom.required = false; return; }
+            fetch(URL_BUSCAR + '?doc=' + num.value, { credentials: 'same-origin' })
+                .then(function (r) { return r.json(); })
+                .then(function (c) {
+                    if (c) {
+                        elegirCliente(c);
+                    } else {
+                        nom.required = true;
+                        mostrarEstado('<span class="las la-user-plus"></span> Cliente nuevo: escribe su nombre o razón social y se registrará al confirmar la venta.', 'nuevo');
+                        nom.focus();
+                    }
+                });
+        });
+<?php if ($modifica && !empty($modifica['doc_num'])): ?>
+        // modificando una venta con cliente: se muestra como cliente elegido
+        num.dispatchEvent(new Event('input'));
+<?php endif; ?>
 
         // pagos mixtos
         var cont = document.getElementById('pagos');
