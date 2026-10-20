@@ -66,3 +66,25 @@
         justify-content: center;
     }
 }
+
+/* ---------- Barra de la tabla: buscador y boton "Nuevo" en la misma linea ---------- */
+.dataTables_wrapper .dataTables_filter {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.dataTables_wrapper .dataTables_filter label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.dataTables_wrapper .btn-nuevo {
+    order: 2;               /* a la derecha del buscador */
+    padding: 8px 16px;
+    font-size: .85rem;
+}
+.dataTables_wrapper .btn-nuevo span {
+    font-size: 1rem;
+}

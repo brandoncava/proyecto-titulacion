@@ -107,7 +107,7 @@ require __DIR__ . '/../layout/cabecera.php';
                         </tbody>
                     </table>
 <?php else: ?>
-                    <p class="sin-datos">No hay órdenes de garantía <?php echo $filtro === 'todas' ? '' : 'con este filtro'; ?>.</p>
+                    <p class="sin-datos">No hay órdenes de garantía<?php echo $filtro === 'todas' ? '' : ' con este filtro'; ?>.</p>
 <?php endif; ?>
                 </div>
             </div>

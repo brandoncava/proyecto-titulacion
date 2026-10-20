@@ -62,11 +62,23 @@
     };
 
     $(function () {
-        $('#example').DataTable({
+        var tabla = $('#example');
+        var dt = tabla.DataTable({
             dom: 'Bfrtip',
             language: idioma,
             pagingType: 'simple_numbers',
             buttons: ['copy', 'csv', 'excel', botonPdf, 'print']
         });
+
+        // el boton "Nuevo" de la pagina pasa a la barra de la tabla, junto al buscador,
+        // en vez de ocupar una fila entera para el solo
+        var nuevo = tabla.closest('.records').find('.record-header .add button').first();
+        if (tabla.length && nuevo.length) {
+            var cabecera = nuevo.closest('.record-header');
+            nuevo.removeAttr('style').addClass('btn-primario btn-nuevo')
+                 .prepend('<span class="las la-plus"></span> ');
+            $(dt.table().container()).find('.dataTables_filter').prepend(nuevo);
+            cabecera.remove();
+        }
     });
 })(jQuery);
