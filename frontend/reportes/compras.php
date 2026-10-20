@@ -220,7 +220,7 @@ require __DIR__ . '/../layout/cabecera.php';
 <?php else: ?>
                                     <td>Válida<?php echo $v->modificada_on ? '<br><small>Modificada ' . date('d/m/Y', strtotime($v->modificada_on)) . '</small>' : ''; ?></td>
 <?php endif; ?>
-                                    <td><a title="Comprobante" href="../compra/comprobante.php?id=<?php echo e($v->idordpur); ?>" class="fa fa-file-text-o tooltip"></a></td>
+                                    <td><a title="Comprobante" href="../compra/comprobante.php?id=<?php echo e($v->idordpur); ?>" class="btn-icono"><span class="las la-file-alt"></span></a></td>
                                 </tr>
 <?php endforeach; ?>
                             </tbody>

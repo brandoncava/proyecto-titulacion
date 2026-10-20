@@ -99,8 +99,8 @@ require __DIR__ . '/../layout/cabecera.php';
 <?php endif; ?>
                                 </td>
                                 <td>
-                                    <a title="Ver y actualizar" href="ver.php?id=<?php echo (int)$g->idgar; ?>" class="fa fa-eye tooltip"></a>
-                                    <a title="Imprimir orden" href="orden.php?id=<?php echo (int)$g->idgar; ?>" class="fa fa-file-text-o tooltip"></a>
+                                    <a title="Ver y actualizar" href="ver.php?id=<?php echo (int)$g->idgar; ?>" class="btn-icono"><span class="las la-eye"></span></a>
+                                    <a title="Imprimir orden" href="orden.php?id=<?php echo (int)$g->idgar; ?>" class="btn-icono"><span class="las la-file-alt"></span></a>
                                 </td>
                             </tr>
 <?php endforeach; ?>

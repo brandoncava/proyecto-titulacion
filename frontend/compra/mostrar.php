@@ -66,20 +66,20 @@ if($sentencia){
                                     <td><h4><?php echo e($d->total_products); ?></h4></td>
         <td>
             
-            <a title="Comprobante" href="comprobante.php?id=<?php echo e($d->idordpur); ?>" class="fa fa-file-text-o tooltip"></a>
+            <a title="Comprobante" href="comprobante.php?id=<?php echo e($d->idordpur); ?>" class="btn-icono"><span class="las la-file-alt"></span></a>
             <?php if ((int)$d->anulada === 1): ?>
                 <span style="color:#B42318;font-weight:bold;margin-left:6px;">ANULADA</span>
             <?php elseif (puede('compras_anular')): ?>
                 <form method="POST" action="" style="display:inline" onsubmit="return confirm('¿Modificar esta compra? Sus productos se cargarán en el carrito de compras para editarlos.');">
                     <?php echo csrf_campo(); ?>
                     <input type="hidden" name="idordpur" value="<?php echo e($d->idordpur); ?>">
-                    <button type="submit" name="modificar_compra" title="Modificar compra" class="fa fa-pencil btn-accion btn-modificar"></button>
+                    <button type="submit" name="modificar_compra" title="Modificar compra" class="btn-icono"><span class="las la-pen"></span></button>
                 </form>
                 <form method="POST" action="" style="display:inline" onsubmit="return anularCompra(this);">
                     <?php echo csrf_campo(); ?>
                     <input type="hidden" name="idordpur" value="<?php echo e($d->idordpur); ?>">
                     <input type="hidden" name="motivo" value="">
-                    <button type="submit" name="anular_compra" title="Anular compra" class="fa fa-ban" style="border:none;background:#B42318;color:#fff;cursor:pointer;padding:6px 9px;border-radius:4px;margin-left:6px;"></button>
+                    <button type="submit" name="anular_compra" title="Anular compra" class="btn-icono peligro"><span class="las la-ban"></span></button>
                 </form>
             <?php endif; ?>
         </td>

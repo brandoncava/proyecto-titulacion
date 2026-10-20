@@ -60,7 +60,7 @@ $data = $sentencia->fetchAll();
                                     <form onsubmit="return confirm('Esta serie pasará a usarse y se desactivará la actual. ¿Continuar?');" method="POST" action="">
                                         <input type="hidden" name="idserie" value="<?php echo e($d->idserie); ?>">
                                         <?php echo csrf_campo(); ?>
-                                        <button name="cambiar_serie" title="Activar esta serie" style="cursor: pointer;" class="fa fa-refresh"></button>
+                                        <button name="cambiar_serie" title="Activar esta serie" class="btn-icono"><span class="las la-sync"></span></button>
                                     </form>
 <?php endif; ?>
                                 </td>

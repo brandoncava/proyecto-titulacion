@@ -57,9 +57,9 @@ if($sentencia){
                                     </td>
                                     <td data-title="Perfil"><?php echo e(nombre_rol($d->rol)); ?></td>
                                     <td>
-                                       <a title="Actualizar" href="../accesos/editar.php?id=<?php echo e($d->id); ?>" class="fa fa-pencil tooltip"></a>
+                                       <a title="Actualizar" href="../accesos/editar.php?id=<?php echo e($d->id); ?>" class="btn-icono"><span class="las la-pen"></span></a>
 
-                                       <a title="Cambiar contraseña" href="../accesos/cambiar.php?id=<?php echo e($d->id); ?>" class="fa fa-key tooltip"></a>
+                                       <a title="Cambiar contraseña" href="../accesos/cambiar.php?id=<?php echo e($d->id); ?>" class="btn-icono"><span class="las la-key"></span></a>
                                      
                                     </td>
                                    

@@ -54,12 +54,12 @@ $select_cart = $connect->prepare("SELECT cart_purchase.idcpr, cart_purchase.user
                 <input type="number" name="p_qty" value="<?php echo e($fetch_cart['quantity']); ?>" style="width:100px;" min="1" max="99" class="form-control" placeholder="Cantidad">
                 <input type="number" name="p_cost" step="0.01" min="0.01" required value="<?php echo e(number_format($fetch_cart['price'], 2, '.', '')); ?>" style="width:110px;" class="form-control" placeholder="Costo s/IGV">
         </div>
-    <button type="submit" name="update_qty" class="btn btn-primary" style="cursor: pointer;"> <i class="fa fa-refresh"></i></button>
+    <button type="submit" name="update_qty" class="btn-icono" title="Actualizar cantidad"><span class="las la-sync"></span></button>
     </form>    
         </td>
         <td><h4>S/<?= number_format($sub_total = ($fetch_cart['price'] * $fetch_cart['quantity']),2); ?></h4></td>
     <td style="width:260px;">
-    <a title="Eliminar" onclick="return confirm('Eliminar del carrito?');" href="../compra/eliminar.php?id=<?php echo e($fetch_cart['idcpr']); ?>" class="fa fa-trash"></a>                            
+    <a title="Eliminar" onclick="return confirm('Eliminar del carrito?');" href="../compra/eliminar.php?id=<?php echo e($fetch_cart['idcpr']); ?>" class="btn-icono peligro"><span class="las la-trash-alt"></span></a>                            
     </td>
      </tr>
      <?php

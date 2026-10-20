@@ -55,13 +55,13 @@ if($sentencia){
                                         </div>
                                     </td>
                                     <td>
-                                       <a title="Actualizar" href="../clientes/editar.php?id=<?php echo e($d->idcli); ?>" class="fa fa-pencil tooltip"></a>
+                                       <a title="Actualizar" href="../clientes/editar.php?id=<?php echo e($d->idcli); ?>" class="btn-icono"><span class="las la-pen"></span></a>
 
                                      <form  onsubmit="return confirm('Realmente desea eliminar el registro?');" method='POST' action='<?php $_SERVER['PHP_SELF'] ?>'>
 <input type='hidden' name='idcli' value="<?php echo e($d->idcli); ?>">
 
 <?php echo csrf_campo(); ?>
-<button name='delete_customer' style="cursor: pointer;" class="fa fa-trash"></button>
+<button name='delete_customer' class="btn-icono peligro"><span class="las la-trash-alt"></span></button>
 </form> 
                                     </td>
                                    

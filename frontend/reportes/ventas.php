@@ -190,7 +190,7 @@ require __DIR__ . '/../layout/cabecera.php';
 <?php else: ?>
                                     <td>Válida</td>
 <?php endif; ?>
-                                    <td><a title="Boleta" href="../ventas/boleta.php?id=<?php echo e($v->idord); ?>" class="fa fa-file-text-o tooltip"></a></td>
+                                    <td><a title="Boleta" href="../ventas/boleta.php?id=<?php echo e($v->idord); ?>" class="btn-icono"><span class="las la-file-alt"></span></a></td>
                                 </tr>
 <?php endforeach; ?>
                             </tbody>

@@ -1920,45 +1920,18 @@ header { view-transition-name: barra-superior; }
    morado (--main-color) = accion principal y lo activo; gris neutro = el resto;
    rojo = solo eliminar o anular. Reemplaza los colores sueltos de cada boton. */
 
-/* acciones de las tablas: todos los iconos .fa (enlaces y botones) como boton con borde, en una fila */
-td .fa {
-    width: 38px;
-    height: 38px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 !important;
-    margin: 0 2px !important;
-    border: 1px solid #d0d5dd !important;
-    border-radius: 8px !important;
-    background: #fff !important;
-    color: #344054 !important;
-    font-size: 16px;
-    cursor: pointer;
-    vertical-align: middle;
-    opacity: 1;
-    transition: border-color 150ms, color 150ms, background 150ms;
-}
-td .fa:hover {
-    opacity: 1;
-    border-color: var(--main-color) !important;
-    color: var(--main-color) !important;
-    background: #f4ebff !important;
-}
-td .fa-trash, td .fa-ban {
-    color: #D92D20 !important;
-}
-td .fa-trash:hover, td .fa-ban:hover {
-    border-color: #D92D20 !important;
-    background: #fef3f2 !important;
-}
+/* acciones de las tablas: botones .btn-icono en una sola fila */
 td form {
     display: inline-flex;
     margin: 0;
     vertical-align: middle;
 }
+td > .btn-icono, td form .btn-icono {
+    margin: 0 2px;
+    vertical-align: middle;
+}
 /* la celda de acciones no se parte en varias lineas */
-td:has(> .fa), td:has(> form > .fa), td:has(> .acciones) {
+td:has(> .btn-icono), td:has(> form > .btn-icono), td:has(> .acciones) {
     white-space: nowrap;
 }
 
@@ -2009,3 +1982,24 @@ td:has(> .fa), td:has(> form > .fa), td:has(> .acciones) {
     border-radius: 6px;
 }
 .closebtn { color: inherit; }
+
+/* carrito: cantidad y boton de actualizar en la misma linea, con el mismo estilo */
+td form .form-group {
+    display: inline-flex;
+    margin: 0;
+}
+td form input[type=number].form-control {
+    width: 80px !important;
+    height: 38px;
+    margin: 0 6px 0 0;
+    padding: 0 10px;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    background: #fff;
+}
+td form input[type=number].form-control:focus {
+    border-color: var(--main-color);
+}
+td form:has(.form-group) {
+    align-items: center;
+}

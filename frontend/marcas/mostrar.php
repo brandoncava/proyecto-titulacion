@@ -55,12 +55,12 @@ $data = $sentencia->fetchAll();
                                 </td>
                                 <td><?php echo (int)$d->productos; ?></td>
                                 <td>
-                                    <a title="Actualizar" href="editar.php?id=<?php echo e($d->idmar); ?>" class="fa fa-pencil tooltip"></a>
+                                    <a title="Actualizar" href="editar.php?id=<?php echo e($d->idmar); ?>" class="btn-icono"><span class="las la-pen"></span></a>
 
                                     <form onsubmit="return confirm('¿Realmente desea dar de baja esta marca?');" method="POST" action="">
                                         <input type="hidden" name="idmar" value="<?php echo e($d->idmar); ?>">
                                         <?php echo csrf_campo(); ?>
-                                        <button name="delete_marca" style="cursor: pointer;" class="fa fa-trash"></button>
+                                        <button name="delete_marca" class="btn-icono peligro"><span class="las la-trash-alt"></span></button>
                                     </form>
                                 </td>
                             </tr>

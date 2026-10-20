@@ -54,12 +54,12 @@ $select_cart = $connect->prepare("SELECT cart.idv, productos.stock, productos.id
             <input type="hidden" name="prdt" value="<?php echo e($fetch_cart['idv']); ?>">
                 <input type="number" name="p_qty" value="<?php echo e($fetch_cart['quantity']); ?>" style="width:100px;" min="1" max="99" class="form-control" placeholder="Cantidad">
         </div>
-    <button type="submit" name="update_qty" class="btn btn-primary" style="cursor: pointer;"> <i class="fa fa-refresh"></i></button>
+    <button type="submit" name="update_qty" class="btn-icono" title="Actualizar cantidad"><span class="las la-sync"></span></button>
     </form>    
         </td>
         <td><h4>S/<?= number_format($sub_total = ($fetch_cart['price'] * $fetch_cart['quantity']),2); ?></h4></td>
     <td style="width:260px;">
-    <a title="Eliminar" onclick="return confirm('Eliminar del carrito?');" href="../ventas/eliminar.php?id=<?php echo e($fetch_cart['idv']); ?>" class="fa fa-trash"></a>                            
+    <a title="Eliminar" onclick="return confirm('Eliminar del carrito?');" href="../ventas/eliminar.php?id=<?php echo e($fetch_cart['idv']); ?>" class="btn-icono peligro"><span class="las la-trash-alt"></span></a>                            
     </td>
      </tr>
      <?php
