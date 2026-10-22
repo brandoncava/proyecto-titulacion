@@ -1,10 +1,8 @@
 <?php
 ob_start();
-require_once __DIR__ . '/../../backend/config/auth.php';
+require_once __DIR__ . '/../../backend/config/app.php';
 
 requiere_permiso('reportes');
-
-require_once '../../backend/config/Conexion.php';
 
 $MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 $hoy = new DateTime('today');

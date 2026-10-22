@@ -1,6 +1,5 @@
 <?php
-require_once __DIR__ . '/../config/auth.php';
-require_once __DIR__ . '/../config/Conexion.php';
+require_once __DIR__ . '/../config/app.php';
 
 if (isset($_POST['delete_product'])) {
 

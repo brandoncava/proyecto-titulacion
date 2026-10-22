@@ -1,14 +1,12 @@
 <?php
 ob_start();
-require_once __DIR__ . '/../../backend/config/auth.php';
+require_once __DIR__ . '/../../backend/config/app.php';
 
 requiere_permiso('productos_ed');
 
-require '../../backend/config/Conexion.php';
-
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT) ?: 0;
 $sentencia = $connect->prepare(
-    'SELECT idprod, codpro, nomprd, desprd, foto, precio, stock, idmar, idcate, modelo, peso, garantia_meses
+    'SELECT idprod, codpro, nomprd, desprd, foto, precio, precio_compra, stock, idmar, idcate, modelo, peso, garantia_meses
        FROM productos WHERE idprod = ?'
 );
 $sentencia->execute([$id]);

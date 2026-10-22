@@ -1,10 +1,9 @@
 <?php
 ob_start();
-require_once __DIR__ . '/../../backend/config/auth.php';
+require_once __DIR__ . '/../../backend/config/app.php';
 
 requiere_permiso('ventas');
 
-require_once('../../backend/config/Conexion.php');
 $user_id = $_SESSION['id'];
 $modifica = $_SESSION['modifica_venta'] ?? null;
 

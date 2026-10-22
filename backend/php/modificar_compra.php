@@ -1,8 +1,7 @@
 <?php
 // "Modificar compra": carga la compra en el carrito de compras del usuario.
 // Al finalizar (add_check_purchase.php) se edita la misma compra y el stock se ajusta con la diferencia.
-require_once __DIR__ . '/../config/auth.php';
-require_once __DIR__ . '/../config/Conexion.php';
+require_once __DIR__ . '/../config/app.php';
 
 if (isset($_POST['modificar_compra'])) {
 

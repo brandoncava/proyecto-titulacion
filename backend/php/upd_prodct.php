@@ -1,6 +1,5 @@
 <?php
-require_once __DIR__ . '/../config/auth.php';
-require_once __DIR__ . '/../config/Conexion.php';
+require_once __DIR__ . '/../config/app.php';
 
 requiere_permiso_api('productos_ed');
 
@@ -13,6 +12,8 @@ if (isset($_POST['upd_prodct'])) {
     $nomprd = trim($_POST['prdnom'] ?? '');
     $desprd = trim($_POST['prddes'] ?? '');
     $precio = trim($_POST['prdprec'] ?? '');
+    // costo sin igv: vacio = se conserva el que tiene (lo actualizan las compras)
+    $costo  = trim((string)($_POST['prdcosto'] ?? ''));
     $idmar  = filter_input(INPUT_POST, 'prdmarc', FILTER_VALIDATE_INT);
     $idcate = filter_input(INPUT_POST, 'prdcate', FILTER_VALIDATE_INT);
     $modelo = trim($_POST['prdmod'] ?? '');
@@ -26,6 +27,10 @@ if (isset($_POST['upd_prodct'])) {
 
     if (!$idprod || $codpro === '' || $nomprd === '' || !is_numeric($precio) || $precio < 0) {
         avisar_y_redirigir('Error!', 'El código, el nombre y un precio válido son obligatorios.', 'error', $volver);
+        return;
+    }
+    if ($costo !== '' && (!is_numeric($costo) || $costo < 0)) {
+        avisar_y_redirigir('Error!', 'El costo debe ser un número no negativo (o déjalo vacío).', 'error', $volver);
         return;
     }
     if ($stock === false || $stock === null) {
@@ -66,9 +71,10 @@ if (isset($_POST['upd_prodct'])) {
         $connect->prepare(
             'UPDATE productos
                 SET codpro = ?, nomprd = ?, desprd = ?, precio = ?, idmar = ?, idcate = ?, modelo = ?, peso = ?,
-                    stock = ?, garantia_meses = ?, foto = ?
+                    stock = ?, garantia_meses = ?, foto = ?, precio_compra = COALESCE(?, precio_compra)
               WHERE idprod = ? LIMIT 1'
-        )->execute([$codpro, $nomprd, $desprd, $precio, $idmar, $idcate, $modelo, $peso, $stock, $garantia, $foto ?: $antes->foto, $idprod]);
+        )->execute([$codpro, $nomprd, $desprd, $precio, $idmar, $idcate, $modelo, $peso, $stock, $garantia, $foto ?: $antes->foto,
+                    $costo === '' ? null : round((float)$costo, 2), $idprod]);
 
         if ((int)$stock !== (int)$antes->stock) {
             registrar_movimiento($connect, $idprod, (int)$_SESSION['id'], 'Ajuste', (int)$stock - (int)$antes->stock);

@@ -1,6 +1,5 @@
 <?php
-require_once __DIR__ . '/../config/auth.php';
-require_once __DIR__ . '/../config/Conexion.php';
+require_once __DIR__ . '/../config/app.php';
 
 requiere_permiso_api('ventas');
 
@@ -27,10 +26,13 @@ if (isset($_POST['add_to_cart'])) {
         return;
     }
 
-    if ($quantity > (int)$producto->stock) {
-        avisar_y_redirigir('Stock insuficiente', 'Solo hay ' . (int)$producto->stock . ' unidades de "' . $producto->nomprd . '".', 'warning', 'nuevo.php');
+    // al modificar una venta, sus unidades vuelven al confirmar y tambien cuentan
+    $disponible = stock_para_venta($connect, $idprod, $producto->stock);
+
+    if ($quantity > $disponible) {
+        avisar_y_redirigir('Stock insuficiente', 'Solo hay ' . $disponible . ' unidades de "' . $producto->nomprd . '".', 'warning', 'nuevo.php');
         return;
     }
 
-    carrito_agregar($connect, 'venta', $user_id, $idprod, $producto->nomprd, $producto->precio, $quantity, (int)$producto->stock);
+    carrito_agregar($connect, 'venta', $user_id, $idprod, $producto->nomprd, $producto->precio, $quantity, $disponible);
 }

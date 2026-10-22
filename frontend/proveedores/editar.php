@@ -1,10 +1,8 @@
 <?php
 ob_start();
-require_once __DIR__ . '/../../backend/config/auth.php';
+require_once __DIR__ . '/../../backend/config/app.php';
 
 requiere_permiso('proveedores');
-
-require '../../backend/config/Conexion.php';
 
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT) ?: 0;
 $b = $connect->prepare('SELECT idprov, rucprv, nomprv, corrprv FROM proveedores WHERE idprov = ? AND state = 1');

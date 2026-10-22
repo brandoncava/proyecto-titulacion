@@ -201,7 +201,7 @@ header {
     align-items: center;
 }
 
-.user div, .client-img {
+.user div {
     height: 40px;
     width: 40px;
     margin-right: 1rem;
@@ -349,27 +349,6 @@ table tbody td:first-child {
 
 table tbody tr {
     border-bottom: 1px solid #dee2e8;
-}
-
-.client {
-    display: flex;
-    align-items: center;
-}
-
-.client-img {
-    margin-right: .5rem;
-    border: 2px solid #b0b0b0;
-    height: 45px;
-    width: 45px;
-}
-
-.client-info h4 {
-    color: #555;
-    font-size: .95rem;
-}
-
-.client-info small {
-    color: #777;
 }
 
 @media only screen and (max-width: 1200px) {
@@ -751,7 +730,10 @@ td small { display: block; color: var(--text-grey); }
 }
 .tarjeta-form input[type=date] {
     width: 100%;
+    margin: 0;
     padding: 9px 12px;
+    background: #fff;
+    color: var(--color-dark);
     border: 1px solid #d0d5dd;
     border-radius: 8px;
     font-size: .9rem;
@@ -1241,6 +1223,7 @@ header { view-transition-name: barra-superior; }
 /* formulario de una sola tarjeta (categoria, marca, serie...): ancho de lectura */
 .tarjetas-form.simple { grid-template-columns: minmax(0, 720px); }
 .mayusculas { text-transform: uppercase; }
+.mayusculas::placeholder { text-transform: none; }
 .tarjeta-form {
     background: #fff;
     border: 1px solid #e4e7ec;
@@ -1738,12 +1721,13 @@ td:has(> .btn-icono), td:has(> form > .btn-icono), td:has(> .acciones) {
 }
 .cantidad-carrito input[type=number] {
     width: 80px;
+    margin: 0;
     padding: 8px 10px;
     border: 1px solid #d0d5dd;
     border-radius: 8px;
     font-size: .9rem;
 }
-.cantidad-carrito .campo-con-unidad input { width: 110px; border-radius: 0 8px 8px 0; }
+.cantidad-carrito .campo-con-unidad input { width: 130px; border-radius: 0 8px 8px 0; }
 .records > .sin-datos { padding: 1.5rem; }
 .miniatura {
     width: 48px;
@@ -1910,3 +1894,174 @@ a.panel-dato:hover { color: var(--main-color); }
     .tablero { grid-template-columns: 1fr; }
     .panel-ancho, .panel-ancho-2 { grid-column: auto; }
 }
+
+/* ---------- Aviso flotante (agregar al carrito sin salir de la lista) ----------
+   arriba a la derecha, bajo el boton "Ver carrito" del encabezado, sin tapar el paginador */
+.aviso-flotante {
+    position: fixed;
+    right: 24px;
+    top: 132px;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: min(440px, calc(100% - 32px));
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: #fff;
+    border: 1px solid #e4e7ec;
+    border-left: 4px solid #067647;
+    box-shadow: 0 12px 28px rgba(16, 24, 40, .16);
+    font-size: .875rem;
+    color: var(--color-dark);
+    opacity: 0;
+    transform: translateY(-12px);
+    pointer-events: none;
+    transition: opacity 180ms, transform 180ms;
+}
+.aviso-flotante.visible { opacity: 1; transform: none; pointer-events: auto; }
+.aviso-flotante.error { border-left-color: #B42318; }
+.aviso-flotante > .las { font-size: 1.3rem; color: #067647; flex-shrink: 0; }
+.aviso-flotante.error > .las { color: #B42318; }
+.aviso-flotante a { margin-left: 6px; font-weight: 600; color: var(--main-color); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) {
+    .aviso-flotante { transition: none; }
+}
+
+/* ---------- Componentes de tabla: TablaSinPaginar y TablaPaginada ----------
+   TablaSinPaginar  listas que siempre son cortas (ej. el carrito): todo se carga de una vez.
+                    .tabla-sin-paginar envuelve una <table>: las filas se desplazan, los titulos quedan fijos
+                    y con .pagina-llena en .page-content llega hasta el borde inferior (los totales quedan a la vista)
+   TablaPaginada    listas que pueden tener miles de filas (ej. productos): data-tabla-paginada="url" en la
+                    tabla #example; el servidor manda una pagina a la vez (tablas.js y tabla_paginada() en helpers) */
+.pagina-llena {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 60px);
+}
+.pagina-llena > .records {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+.tabla-sin-paginar {
+    flex: 1;
+    min-height: 180px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+.tabla-sin-paginar thead th,
+.dataTables_scrollHead thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #45208A;
+}
+.dataTables_scrollBody { overscroll-behavior: contain; }
+.tabla-carrito tbody td { padding-top: .6rem; padding-bottom: .6rem; }
+.carrito-pie { background: #fff; border-radius: 0 0 10px 10px; }
+
+/* ---------- Selector de cantidad "- n +" en la lista de productos ---------- */
+.accion-carrito { display: flex; align-items: center; gap: 10px; }
+.selector-cantidad {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px;
+    border: 1.5px solid var(--main-color);
+    border-radius: 999px;
+    background: #fff;
+    transition: opacity 120ms;
+}
+.accion-carrito.ocupado { opacity: .55; pointer-events: none; }
+.accion-carrito .costo-linea input { width: 100px; margin: 0; padding: 8px 10px; border: 1px solid #d0d5dd; border-radius: 0 8px 8px 0; font-size: .9rem; }
+.selector-cantidad button {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--main-color);
+    font-size: 1rem;
+    cursor: pointer;
+}
+.selector-cantidad button:hover:not(:disabled) { background: #f4ebff; }
+.selector-cantidad button:disabled { color: #c4c0cc; cursor: not-allowed; }
+.selector-cantidad input[type=number] {
+    width: 46px;
+    margin: 0;
+    padding: 4px 0;
+    border: none;
+    border-radius: 6px;
+    background: #f4f3f7;
+    text-align: center;
+    font-weight: 700;
+    font-size: .95rem;
+    color: var(--color-dark);
+    -moz-appearance: textfield;
+}
+.selector-cantidad input::-webkit-outer-spin-button,
+.selector-cantidad input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+/* texto de boton con partes (ej. "Ver carrito (3)"): una sola pieza, sin el tamaño de los iconos */
+.btn-primario .btn-texto, .btn-primario .btn-texto b { font-size: inherit; font-weight: inherit; }
+
+/* buscador de la tabla movido al encabezado de la pagina (#buscador-tabla, ver tablas.js) */
+.buscador-cabecera {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.buscador-cabecera > .las {
+    position: absolute;
+    left: 12px;
+    color: var(--text-grey);
+    font-size: 1.1rem;
+    pointer-events: none;
+}
+.buscador-cabecera input {
+    width: 320px;
+    margin: 0;
+    padding: 10px 12px 10px 36px;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    background: #fff;
+    font-size: .9rem;
+    color: var(--color-dark);
+}
+.buscador-cabecera input:focus {
+    outline: none;
+    border-color: var(--main-color);
+    box-shadow: 0 0 0 3px rgba(108, 43, 217, .12);
+}
+@media screen and (max-width: 768px) {
+    .buscador-cabecera, .buscador-cabecera input { width: 100%; }
+}
+
+/* montos que no se parten en dos lineas (ej. "S/ 1,299.00") */
+.sin-salto { white-space: nowrap; }
+
+/* filtro (select) junto al buscador en el encabezado de un listado, ej. estado de garantias */
+.filtro-cabecera {
+    width: auto;
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    background: #fff;
+    font-size: .9rem;
+    color: var(--color-dark);
+}
+.cabecera-form-botones form { display: flex; }
+
+/* carrito: linea que pide mas de lo que hay en stock (no se puede cobrar hasta corregirla) */
+.aviso-fila { display: none; margin-left: 6px; }
+tr.fila-sin-stock td { background: #fff5f4; }
+tr.fila-sin-stock .aviso-fila { display: inline-block; }
+/* aviso sobre los botones, alineado a la derecha */
+.carrito-lado { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.carrito-lado #aviso-stock { margin: 0; }
+/* separacion entre columnas (las celdas base no tienen relleno lateral) */
+.tabla-carrito th, .tabla-carrito td { padding-right: 1rem; }

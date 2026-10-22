@@ -63,20 +63,57 @@
 
     $(function () {
         var tabla = $('#example');
-        var dt = tabla.DataTable({
+        // TablaPaginada (data-tabla-paginada="url"): para listas que pueden tener miles de filas.
+        // El servidor manda solo la pagina que se ve (ver tabla_paginada() en helpers.php), asi el
+        // modulo carga rapido; buscar y ordenar tambien los resuelve el servidor. Las filas se
+        // desplazan dentro de la tarjeta hasta el borde inferior y el paginador queda a la vista.
+        // (Las listas cortas usan TablaSinPaginar, solo css: .tabla-sin-paginar)
+        var url = tabla.data('tablaPaginada');
+        var opciones = {
             dom: 'Bfrtip',
             language: idioma,
             pagingType: 'simple_numbers',
             buttons: ['copy', 'csv', 'excel', botonPdf, 'print']
-        });
+        };
+        if (url) {
+            $.extend(opciones, {
+                dom: 'frtip',             // exportar una sola pagina confundiria: los reportes exportan completo
+                serverSide: true,
+                processing: true,
+                ajax: url,
+                pageLength: 25,
+                order: [],
+                searchDelay: 350,
+                scrollY: '50vh',
+                scrollCollapse: true,
+                // una celda puede pedir una clase para su fila: <span data-fila-clase="fila-anulada">
+                createdRow: function (fila) {
+                    var marca = fila.querySelector('[data-fila-clase]');
+                    if (marca) { fila.classList.add(marca.dataset.filaClase); }
+                }
+            });
+        }
+        var dt = tabla.DataTable(opciones);
 
-        // el boton "Nuevo" de la pagina pasa a la barra de la tabla, junto al buscador,
-        // en vez de ocupar una fila entera para el solo
-        var nuevo = tabla.closest('.records').find('.record-header .btn-nuevo').first();
-        if (tabla.length && nuevo.length) {
-            var cabecera = nuevo.closest('.record-header');
-            $(dt.table().container()).find('.dataTables_filter').prepend(nuevo);
-            cabecera.remove();
+        // si la pagina reserva #buscador-tabla en su encabezado, el buscador va ahi (junto a sus botones)
+        var lugar = $('#buscador-tabla');
+        if (lugar.length) {
+            var campo = $(dt.table().container()).find('.dataTables_filter input');
+            campo.attr('placeholder', lugar.data('placeholder') || 'Buscar').attr('aria-label', 'Buscar');
+            lugar.append('<span class="las la-search"></span>').append(campo);
+            $(dt.table().container()).find('.dataTables_filter').remove();
+        }
+
+        if (url) {
+            var cuerpo = $(dt.table().container()).find('.dataTables_scrollBody');
+            var ajustar = function () {
+                // alto libre desde el inicio de las filas hasta el borde, menos la linea de "Mostrando..." y el margen
+                var alto = window.innerHeight - cuerpo[0].getBoundingClientRect().top - 90;
+                cuerpo.css('max-height', Math.max(220, alto) + 'px');
+                dt.columns.adjust();
+            };
+            ajustar();
+            $(window).on('resize', ajustar);
         }
     });
 })(jQuery);

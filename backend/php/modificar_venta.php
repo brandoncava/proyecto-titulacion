@@ -1,8 +1,7 @@
 <?php
 // "Modificar venta": carga los productos de la venta en el carrito del usuario.
 // Al finalizar (add_check.php) la venta original se anula y se emite otra que la reemplaza.
-require_once __DIR__ . '/../config/auth.php';
-require_once __DIR__ . '/../config/Conexion.php';
+require_once __DIR__ . '/../config/app.php';
 
 if (isset($_POST['modificar_venta'])) {
 

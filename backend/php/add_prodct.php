@@ -1,6 +1,5 @@
 <?php
-require_once __DIR__ . '/../config/auth.php';
-require_once __DIR__ . '/../config/Conexion.php';
+require_once __DIR__ . '/../config/app.php';
 
 requiere_permiso_api('productos_ed');
 
@@ -16,6 +15,9 @@ if (isset($_POST['add_prodct'])) {
     $peso   = mb_substr(trim($_POST['prdpes'] ?? ''), 0, 60);
 
     $precio = filter_input(INPUT_POST, 'prdprec', FILTER_VALIDATE_FLOAT);
+    // costo sin igv, opcional: si no se sabe queda en 0 y lo pone la primera compra
+    $costoTexto = trim((string)($_POST['prdcosto'] ?? ''));
+    $costo = $costoTexto === '' ? 0.0 : filter_var($costoTexto, FILTER_VALIDATE_FLOAT);
     $stock  = filter_input(INPUT_POST, 'prdstock', FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
     $garantia = filter_input(INPUT_POST, 'prdgar', FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 120]]);
     if ($garantia === false || $garantia === null) {
@@ -27,6 +29,11 @@ if (isset($_POST['add_prodct'])) {
 
     if ($codpro === '' || $nomprd === '') {
         avisar_y_redirigir('Error!', 'El código y el nombre del producto son obligatorios.', 'error', $volver);
+        return;
+    }
+
+    if ($costo === false || $costo < 0) {
+        avisar_y_redirigir('Error!', 'El costo debe ser un número no negativo (o déjalo vacío).', 'error', $volver);
         return;
     }
 
@@ -64,9 +71,9 @@ if (isset($_POST['add_prodct'])) {
 
         $connect->prepare(
             'INSERT INTO productos
-                (codpro, nomprd, desprd, foto, precio, stock, garantia_meses, idmar, idcate, modelo, peso, state)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)'
-        )->execute([$codpro, $nomprd, $desprd, $foto, $precio, $stock, $garantia, $idmar, $idcate, $modelo, $peso]);
+                (codpro, nomprd, desprd, foto, precio, precio_compra, stock, garantia_meses, idmar, idcate, modelo, peso, state)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)'
+        )->execute([$codpro, $nomprd, $desprd, $foto, $precio, round($costo, 2), $stock, $garantia, $idmar, $idcate, $modelo, $peso]);
 
         if ($stock > 0) {
             registrar_movimiento($connect, (int)$connect->lastInsertId(), (int)$_SESSION['id'], 'Saldo inicial', $stock);

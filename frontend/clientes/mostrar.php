@@ -1,92 +1,24 @@
 <?php
 ob_start();
-require_once __DIR__ . '/../../backend/config/auth.php';
+require_once __DIR__ . '/../../backend/config/app.php';
 
 requiere_permiso('clientes');
 
 $seccion = 'clientes';
 $migas = 'Clientes';
 $tablas = true;
+$listado = [
+    'titulo'    => 'Clientes',
+    'subtitulo' => 'Personas (DNI) y empresas (RUC)',
+    'buscar'    => 'Buscar nombre, DNI/RUC o correo',
+    'nuevo'     => ['Nuevo cliente', 'nuevo.php'],
+    'datos'     => 'datos.php',
+    'columnas'  => ['#', 'Cliente', 'Contacto', ['Acciones', false]],
+];
 require __DIR__ . '/../layout/cabecera.php';
+include __DIR__ . '/../layout/listado.php';
+require __DIR__ . '/../layout/pie.php';
 ?>
-            
-            <div class="page-content">
-            
-            <div class="records table-responsive">
-                     <div class="record-header">
-                        <div class="add">
-                          
-                            <a href="nuevo.php" class="btn-primario btn-nuevo"><span class="las la-plus"></span> Nuevo</a>
-                        </div>
-                    </div>
-                    <div>
-                        <?php 
-require '../../backend/config/Conexion.php';
-$sentencia = $connect->prepare("SELECT * FROM clientes WHERE state = 1 ORDER BY idcli DESC;");
- $sentencia->execute();
-$data =  array();
-if($sentencia){
-  while($r = $sentencia->fetchObject()){
-    $data[] = $r;
-  }
-}
-     ?>
-     <?php if(count($data)>0):?>
-                        <table width="100%" id="example">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th><span class="las la-sort"></span>Clientes</th>
-                                    <th>Contacto</th>
-                                    <th><span class="las la-sort"></span>Acciones</th>
-                                    
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach($data as $d):?>
-                                <tr>
-                                    <td><?php echo e($d->idcli); ?></td>
-                                    <td>
-                                        <div class="client">
-                                           
-                                            <div class="client-info">
-                                                <h4><?php echo e($d->nocl); ?>&nbsp;<?php echo e($d->apcl); ?></h4>
-                                                <small><?php echo e(strtoupper($d->tipd) . ' ' . $d->nudoc); ?></small>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="client-info">
-                                            <h4><?php echo $d->telfcl !== '' ? e($d->telfcl) : '—'; ?></h4>
-                                            <small><?php echo e($d->emailcl ?? ''); ?><?php if ((int)$d->acepta_promos === 1): ?> <span class="las la-bullhorn" title="Acepta promociones"></span><?php endif; ?></small>
-                                        </div>
-                                    </td>
-                                    <td>
-                                       <a title="Actualizar" href="../clientes/editar.php?id=<?php echo e($d->idcli); ?>" class="btn-icono"><span class="las la-pen"></span></a>
-
-                                     <form  onsubmit="return confirm('Realmente desea eliminar el registro?');" method='POST' action='<?php $_SERVER['PHP_SELF'] ?>'>
-<input type='hidden' name='idcli' value="<?php echo e($d->idcli); ?>">
-
-<?php echo csrf_campo(); ?>
-<button name='delete_customer' class="btn-icono peligro"><span class="las la-trash-alt"></span></button>
-</form> 
-                                    </td>
-                                   
-                                </tr>
-                                 <?php endforeach; ?>
-                                
-                            </tbody>
-                        </table>
-                          <?php else:?>
-                           <p class="sin-datos">Todavía no hay registros.</p>
-    <?php endif; ?>
-                    </div>
-
-                </div>
-            
-            </div>
-            
-<?php require __DIR__ . '/../layout/pie.php'; ?>
     <?php include_once '../../backend/php/delete_customer.php' ?>
 </body>
 </html>

@@ -11,7 +11,7 @@ if (!isset($marcas, $categorias)) {
 
 $esNuevo = empty($producto);
 $p = $producto ?: (object)[
-    'idprod' => 0, 'codpro' => '', 'nomprd' => '', 'desprd' => '', 'precio' => '', 'stock' => 0,
+    'idprod' => 0, 'codpro' => '', 'nomprd' => '', 'desprd' => '', 'precio' => '', 'precio_compra' => '', 'stock' => 0,
     'idmar' => 0, 'idcate' => 0, 'modelo' => '', 'peso' => '', 'garantia_meses' => 12,
 ];
 
@@ -83,21 +83,26 @@ include __DIR__ . '/../layout/cabecera_form.php';
 
                         <div class="fila-campos">
                             <div>
-                                <label for="prdprec">Precio del producto <span class="req">*</span></label>
+                                <label for="prdprec">Precio de venta (con IGV) <span class="req">*</span></label>
                                 <div class="campo-con-unidad">
                                     <span class="unidad">S/</span>
                                     <input type="number" id="prdprec" name="prdprec" value="<?php echo e($p->precio); ?>" min="0" step="0.01" placeholder="0.00" required>
                                 </div>
                             </div>
                             <div>
-                                <label for="prdstock"><?php echo $esNuevo ? 'Stock inicial' : 'Stock actual'; ?> <span class="req">*</span></label>
-                                <input type="number" id="prdstock" name="prdstock" value="<?php echo (int)$p->stock; ?>" min="0" step="1" required>
+                                <label for="prdcosto">Costo (sin IGV)</label>
+                                <div class="campo-con-unidad">
+                                    <span class="unidad">S/</span>
+                                    <input type="number" id="prdcosto" name="prdcosto" value="<?php echo (float)$p->precio_compra > 0 ? e($p->precio_compra) : ''; ?>" min="0" step="0.01" placeholder="Lo que te cuesta">
+                                </div>
                             </div>
                         </div>
+                        <label for="prdstock"><?php echo $esNuevo ? 'Stock inicial' : 'Stock actual'; ?> <span class="req">*</span></label>
+                        <input type="number" id="prdstock" name="prdstock" value="<?php echo (int)$p->stock; ?>" min="0" step="1" required>
                         <p class="nota"><span class="las la-info-circle"></span>
                             <?php echo $esNuevo
-                                ? 'El stock inicial queda registrado en el kardex como saldo inicial. Después lo actualizan las compras y ventas.'
-                                : 'Los ajustes de stock se registran en el kardex como un conteo o una merma, según corresponda. Las compras y ventas lo actualizan solas.'; ?>
+                                ? 'El stock inicial queda registrado en el kardex como saldo inicial. El costo es opcional: cada compra lo actualiza con el de la factura del proveedor.'
+                                : 'Los ajustes de stock se registran en el kardex como un conteo o una merma. Cada compra actualiza el stock y el costo con el de la factura del proveedor.'; ?>
                         </p>
                     </section>
 

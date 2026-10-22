@@ -1,8 +1,7 @@
 <?php
 // acciones sueltas del carrito: quitar una linea o cancelar la modificacion en curso.
 // La pagina (ventas/ o compra/) define $tipoCarrito y $accion ('quitar' o 'cancelar') y lo incluye.
-require_once __DIR__ . '/../../backend/config/auth.php';
-require_once __DIR__ . '/../../backend/config/Conexion.php';
+require_once __DIR__ . '/../../backend/config/app.php';
 
 if (!isset($tipoCarrito, $accion) || !isset(CARRITOS[$tipoCarrito])) {
     exit;
@@ -13,7 +12,14 @@ $user_id = (int)$_SESSION['id'];
 
 if ($accion === 'quitar') {
     $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
-    if ($id && !carrito_quitar($connect, $tipoCarrito, $id, $user_id)) {
+    $ok = !$id || carrito_quitar($connect, $tipoCarrito, $id, $user_id);
+    // desde la lista de productos (fetch) se responde json con el resultado
+    if (isset($_GET['ajax'])) {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['ok' => $ok]);
+        exit;
+    }
+    if (!$ok) {
         avisar_y_redirigir('Error!', 'No se pudo quitar el producto del carrito. Comuníquese con el administrador.', 'error', 'cart.php');
         exit;
     }

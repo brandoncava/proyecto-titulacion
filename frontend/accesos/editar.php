@@ -1,10 +1,8 @@
 <?php
 ob_start();
-require_once __DIR__ . '/../../backend/config/auth.php';
+require_once __DIR__ . '/../../backend/config/app.php';
 
 requiere_permiso('usuarios');
-
-require '../../backend/config/Conexion.php';
 
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT) ?: 0;
 $b = $connect->prepare('SELECT id, nombre, username, correo FROM usuarios WHERE id = ?');

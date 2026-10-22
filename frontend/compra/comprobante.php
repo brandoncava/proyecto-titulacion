@@ -1,8 +1,7 @@
 <?php
 // PDF del comprobante interno de una compra
-require_once __DIR__ . '/../../backend/config/auth.php';
+require_once __DIR__ . '/../../backend/config/app.php';
 require_once __DIR__ . '/../../backend/config/pdf.php';
-require '../../backend/config/Conexion.php';
 
 requiere_permiso('compras');
 

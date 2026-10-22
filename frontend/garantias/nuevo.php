@@ -1,10 +1,8 @@
 <?php
 ob_start();
-require_once __DIR__ . '/../../backend/config/auth.php';
+require_once __DIR__ . '/../../backend/config/app.php';
 
 requiere_permiso('garantias');
-
-require '../../backend/config/Conexion.php';
 
 $q      = trim($_GET['q'] ?? '');
 $idord  = filter_input(INPUT_GET, 'idord', FILTER_VALIDATE_INT) ?: 0;

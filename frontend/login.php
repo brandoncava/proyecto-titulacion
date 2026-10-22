@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../backend/config/auth.php';
+require_once __DIR__ . '/../backend/config/app.php';
 
 if (hay_sesion()) {
     header('Location: ' . panel_inicial(rol_actual()));

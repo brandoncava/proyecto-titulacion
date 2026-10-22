@@ -1,6 +1,6 @@
 <?php
 ob_start();
-require_once __DIR__ . '/../../backend/config/auth.php';
+require_once __DIR__ . '/../../backend/config/app.php';
 
 requiere_permiso('compras');
 
@@ -14,5 +14,6 @@ require __DIR__ . '/../layout/pie.php';
 ?>
     <?php include_once '../../backend/php/add_cart_purchase.php' ?>
     <script type="text/javascript" src="../../backend/js/reenvio.js"></script>
+    <script type="text/javascript" src="../../backend/js/carrito.js"></script>
 </body>
 </html>

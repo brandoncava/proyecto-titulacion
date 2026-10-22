@@ -1,7 +1,6 @@
 <?php
 // alta rapida de marca desde el modal de productos/nuevo.php (AJAX, responde JSON)
-require_once __DIR__ . '/../config/auth.php';
-require_once __DIR__ . '/../config/Conexion.php';
+require_once __DIR__ . '/../config/app.php';
 
 requiere_permiso_api('catalogos');
 csrf_validar();

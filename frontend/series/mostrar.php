@@ -1,82 +1,24 @@
 <?php
 ob_start();
-require_once __DIR__ . '/../../backend/config/auth.php';
+require_once __DIR__ . '/../../backend/config/app.php';
 
 requiere_permiso('series');
 
 $seccion = 'series';
 $migas = 'Series';
 $tablas = true;
+$listado = [
+    'titulo'    => 'Series',
+    'subtitulo' => 'Numeración de boletas y facturas (una activa por comprobante)',
+    'buscar'    => 'Buscar serie o comprobante',
+    'nuevo'     => ['Nueva serie', 'nuevo.php'],
+    'datos'     => 'datos.php',
+    'columnas'  => ['#', 'Comprobante', 'Serie', 'Último número', 'Emitidos', 'Estado', ['Acciones', false]],
+];
 require __DIR__ . '/../layout/cabecera.php';
-
-require '../../backend/config/Conexion.php';
-// cuantos comprobantes emitio cada serie
-$sentencia = $connect->prepare(
-    'SELECT s.idserie, s.tipc, s.serie, s.ultimo, s.state, COUNT(o.idord) AS comprobantes
-       FROM series s
-       LEFT JOIN orders o ON o.idserie = s.idserie
-      GROUP BY s.idserie, s.tipc, s.serie, s.ultimo, s.state
-      ORDER BY s.idserie DESC'
-);
-$sentencia->execute();
-$data = $sentencia->fetchAll();
+include __DIR__ . '/../layout/listado.php';
+require __DIR__ . '/../layout/pie.php';
 ?>
-
-            <div class="page-content">
-
-            <div class="records table-responsive">
-                <div class="record-header">
-                    <div class="add">
-                        <a href="nuevo.php" class="btn-primario btn-nuevo"><span class="las la-plus"></span> Nuevo</a>
-                    </div>
-                </div>
-                <div>
-<?php if (count($data) > 0): ?>
-                    <table width="100%" id="example">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th><span class="las la-sort"></span>Comprobante</th>
-                                <th><span class="las la-sort"></span>Serie</th>
-                                <th><span class="las la-sort"></span>Último número</th>
-                                <th><span class="las la-sort"></span>Emitidos</th>
-                                <th><span class="las la-sort"></span>Estado</th>
-                                <th><span class="las la-sort"></span>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-<?php foreach ($data as $d): ?>
-                            <tr>
-                                <td><?php echo e($d->idserie); ?></td>
-                                <td><h4><?php echo e($d->tipc); ?></h4></td>
-                                <td><h4><?php echo e($d->serie); ?></h4></td>
-                                <td><?php echo e(formato_comprobante($d->serie, $d->ultimo)); ?></td>
-                                <td><?php echo (int)$d->comprobantes; ?></td>
-                                <td><?php echo (int)$d->state === 1 ? 'Activa' : 'Inactiva'; ?></td>
-                                <td>
-<?php if ((int)$d->state === 1): ?>
-                                    <small>En uso</small>
-<?php else: ?>
-                                    <form onsubmit="return confirm('Esta serie pasará a usarse y se desactivará la actual. ¿Continuar?');" method="POST" action="">
-                                        <input type="hidden" name="idserie" value="<?php echo e($d->idserie); ?>">
-                                        <?php echo csrf_campo(); ?>
-                                        <button name="cambiar_serie" title="Activar esta serie" class="btn-icono"><span class="las la-sync"></span></button>
-                                    </form>
-<?php endif; ?>
-                                </td>
-                            </tr>
-<?php endforeach; ?>
-                        </tbody>
-                    </table>
-<?php else: ?>
-                    <p class="sin-datos">Todavía no hay registros.</p>
-<?php endif; ?>
-                </div>
-            </div>
-
-            </div>
-
-<?php require __DIR__ . '/../layout/pie.php'; ?>
 <?php include_once '../../backend/php/upd_serie.php'; ?>
 </body>
 </html>

@@ -1,6 +1,5 @@
 <?php
-require_once __DIR__ . '/../config/auth.php';
-require_once __DIR__ . '/../config/Conexion.php';
+require_once __DIR__ . '/../config/app.php';
 
 requiere_permiso_api('ventas');
 
@@ -16,12 +15,15 @@ if (isset($_POST['update_qty'])) {
         return;
     }
 
-    $consulta = $connect->prepare('SELECT p.stock, p.nomprd FROM cart c INNER JOIN productos p ON c.idprod = p.idprod WHERE c.idv = ? AND c.user_id = ?');
+    $consulta = $connect->prepare('SELECT p.idprod, p.stock, p.nomprd FROM cart c INNER JOIN productos p ON c.idprod = p.idprod WHERE c.idv = ? AND c.user_id = ?');
     $consulta->execute([$idv, (int)$_SESSION['id']]);
     $producto = $consulta->fetch();
 
-    if ($producto && $quantity > (int)$producto->stock) {
-        avisar_y_redirigir('Stock insuficiente', 'Solo hay ' . (int)$producto->stock . ' unidades de "' . $producto->nomprd . '".', 'warning', '../ventas/cart.php');
+    // al modificar una venta, sus unidades vuelven al confirmar y tambien cuentan
+    $disponible = $producto ? stock_para_venta($connect, $producto->idprod, $producto->stock) : 0;
+
+    if ($producto && $quantity > $disponible) {
+        avisar_y_redirigir('Stock insuficiente', 'Solo hay ' . $disponible . ' unidades de "' . $producto->nomprd . '".', 'warning', '../ventas/cart.php');
         return;
     }
 

@@ -1,119 +1,34 @@
 <?php
 ob_start();
-require_once __DIR__ . '/../../backend/config/auth.php';
+require_once __DIR__ . '/../../backend/config/app.php';
 
 requiere_permiso('garantias');
 
-require '../../backend/config/Conexion.php';
+// por defecto solo las que siguen en proceso (los filtros validos estan en datos_filtros.php)
+require_once __DIR__ . '/datos_filtros.php';
+$filtro = filtro_garantias($_GET['estado'] ?? '');
 
-// por defecto solo las que siguen en proceso
-$filtros = ['proceso' => 'En proceso', 'todas' => 'Todas'] + GARANTIA_ESTADOS;
-$filtro  = array_key_exists($_GET['estado'] ?? '', $filtros) ? $_GET['estado'] : 'proceso';
-
-$where = '';
-$params = [];
-if ($filtro === 'proceso') {
-    $where = "WHERE g.estado <> 'Entregado'";
-} elseif ($filtro !== 'todas') {
-    $where = 'WHERE g.estado = ?';
-    $params[] = $filtro;
+$opciones = '';
+foreach (FILTROS_GARANTIA as $valor => $texto) {
+    $opciones .= '<option value="' . e($valor) . '"' . ($valor === $filtro ? ' selected' : '') . '>' . e($texto) . '</option>';
 }
-
-$sentencia = $connect->prepare(
-    "SELECT g.idgar, g.fecha_ingreso, g.cliente_nombre, g.cliente_doc, g.comprobante, g.vigente, g.vence,
-            g.estado, g.resultado, p.nomprd, pr.nomprv
-       FROM garantias g
-       INNER JOIN productos p ON p.idprod = g.idprod
-       LEFT JOIN proveedores pr ON pr.idprov = g.idprov
-       $where
-      ORDER BY g.idgar DESC"
-);
-$sentencia->execute($params);
-$data = $sentencia->fetchAll();
 
 $seccion = 'garantias';
 $migas = 'Garantías';
 $tablas = true;
+$listado = [
+    'titulo'    => 'Garantías',
+    'subtitulo' => 'Órdenes de recepción y su trámite con la marca',
+    'buscar'    => 'Buscar cliente o producto',
+    'nuevo'     => ['Nueva orden de garantía', 'nuevo.php'],
+    'datos'     => 'datos.php?estado=' . urlencode($filtro),
+    'columnas'  => ['N° orden', 'Ingreso', 'Cliente', 'Producto', 'Compra', ['Garantía', false], 'Estado', ['Acciones', false]],
+    'filtros'   => '<form method="GET" action=""><select name="estado" class="filtro-cabecera" aria-label="Estado" onchange="this.form.submit()">'
+                 . $opciones . '</select></form>',
+];
 require __DIR__ . '/../layout/cabecera.php';
+include __DIR__ . '/../layout/listado.php';
+require __DIR__ . '/../layout/pie.php';
 ?>
-
-            <div class="page-content">
-
-                <form class="filtros" method="GET" action="">
-                    <label>Estado
-                        <select name="estado" onchange="this.form.submit()">
-<?php foreach ($filtros as $valor => $texto): ?>
-                            <option value="<?php echo e($valor); ?>"<?php echo $valor === $filtro ? ' selected' : ''; ?>><?php echo e($texto); ?></option>
-<?php endforeach; ?>
-                        </select>
-                    </label>
-                </form>
-
-            <div class="records table-responsive">
-                <div class="record-header">
-                    <div class="add">
-                        <a href="nuevo.php" class="btn-primario btn-nuevo"><span class="las la-plus"></span> Nueva orden de garantía</a>
-                    </div>
-                </div>
-                <div>
-<?php if ($data): ?>
-                    <table width="100%" id="example">
-                        <thead>
-                            <tr>
-                                <th>N° orden</th>
-                                <th><span class="las la-sort"></span>Ingreso</th>
-                                <th><span class="las la-sort"></span>Cliente</th>
-                                <th><span class="las la-sort"></span>Producto</th>
-                                <th><span class="las la-sort"></span>Compra</th>
-                                <th><span class="las la-sort"></span>Garantía</th>
-                                <th><span class="las la-sort"></span>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-<?php foreach ($data as $g): ?>
-                            <tr>
-                                <td data-order="<?php echo (int)$g->idgar; ?>"><b><?php echo e(formato_garantia($g->idgar)); ?></b></td>
-                                <td data-order="<?php echo e($g->fecha_ingreso); ?>"><?php echo date('d/m/Y', strtotime($g->fecha_ingreso)); ?></td>
-                                <td>
-                                    <h4><?php echo e($g->cliente_nombre); ?></h4>
-                                    <small><?php echo e($g->cliente_doc); ?></small>
-                                </td>
-                                <td><?php echo e($g->nomprd); ?></td>
-                                <td><?php echo e($g->comprobante ?: '—'); ?></td>
-                                <td>
-<?php if ((int)$g->vigente === 1): ?>
-                                    <span class="chip ok">Vigente</span>
-<?php else: ?>
-                                    <span class="chip peligro">Vencida</span>
-<?php endif; ?>
-                                    <small>hasta <?php echo date('d/m/Y', strtotime($g->vence)); ?></small>
-                                </td>
-                                <td>
-                                    <span class="chip <?php echo GARANTIA_CHIP[$g->estado] ?? ''; ?>"><?php echo e(GARANTIA_ESTADOS[$g->estado] ?? $g->estado); ?></span>
-<?php if ($g->resultado): ?>
-                                    <small><?php echo e($g->resultado); ?></small>
-<?php endif; ?>
-<?php if ($g->nomprv): ?>
-                                    <small><?php echo e($g->nomprv); ?></small>
-<?php endif; ?>
-                                </td>
-                                <td>
-                                    <a title="Ver y actualizar" href="ver.php?id=<?php echo (int)$g->idgar; ?>" class="btn-icono"><span class="las la-eye"></span></a>
-                                    <a title="Imprimir orden" href="orden.php?id=<?php echo (int)$g->idgar; ?>" class="btn-icono"><span class="las la-file-alt"></span></a>
-                                </td>
-                            </tr>
-<?php endforeach; ?>
-                        </tbody>
-                    </table>
-<?php else: ?>
-                    <p class="sin-datos">No hay órdenes de garantía<?php echo $filtro === 'todas' ? '' : ' con este filtro'; ?>.</p>
-<?php endif; ?>
-                </div>
-            </div>
-
-            </div>
-
-<?php require __DIR__ . '/../layout/pie.php'; ?>
 </body>
 </html>

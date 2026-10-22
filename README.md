@@ -66,7 +66,7 @@ ckcomputers_system/
 │   ├── comun/                    carrito y selección de productos compartidos por ventas y compras
 │   └── login.php
 ├── backend/
-│   ├── config/                   conexión, sesión, permisos, utilidades y base de los PDF
+│   ├── config/                   app.php (lo que carga cada página: sesión, permisos y conexión), utilidades y base de los PDF
 │   ├── php/                      procesan los formularios (guardar, editar, anular...)
 │   ├── css/  js/  img/
 │   ├── fpdf/                     librería para los PDF

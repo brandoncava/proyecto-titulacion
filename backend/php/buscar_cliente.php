@@ -2,8 +2,7 @@
 // busqueda de clientes para Finalizar venta (responde JSON)
 //   ?q=texto  -> hasta 8 clientes cuyo documento empieza con el texto o cuyo nombre lo contiene
 //   ?doc=num  -> el cliente con ese documento exacto, o null
-require_once __DIR__ . '/../config/auth.php';
-require_once __DIR__ . '/../config/Conexion.php';
+require_once __DIR__ . '/../config/app.php';
 
 requiere_permiso_api('ventas');
 

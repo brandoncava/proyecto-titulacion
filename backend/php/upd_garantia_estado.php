@@ -1,7 +1,6 @@
 <?php
 // avanza la orden de garantia al siguiente estado y lo anota en el historial
-require_once __DIR__ . '/../config/auth.php';
-require_once __DIR__ . '/../config/Conexion.php';
+require_once __DIR__ . '/../config/app.php';
 
 if (isset($_POST['avanzar_garantia'])) {
 

@@ -265,8 +265,15 @@ function csrf_validar()
     }
 }
 
-function avisar_y_redirigir($titulo, $texto, $tipo, $destino)
+// aviso con sweetalert y vuelta a $destino. Si la peticion vino por fetch (campo ajax=1)
+// responde json con el aviso y $datos, y no cambia de pagina
+function avisar_y_redirigir($titulo, $texto, $tipo, $destino, $datos = [])
 {
+    if (!empty($_POST['ajax'])) {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['ok' => $tipo === 'success', 'titulo' => $titulo, 'texto' => $texto, 'tipo' => $tipo] + $datos, JSON_UNESCAPED_UNICODE);
+        exit;
+    }
     echo '<script type="text/javascript">
 swal(' . json_encode($titulo) . ', ' . json_encode($texto) . ', ' . json_encode($tipo) . ').then(function() {
     window.location = ' . json_encode($destino) . ';
@@ -281,6 +288,28 @@ const CARRITOS = [
     'venta'  => ['tabla' => 'cart',          'id' => 'idv',   'permiso' => 'ventas',  'sesion' => 'modifica_venta'],
     'compra' => ['tabla' => 'cart_purchase', 'id' => 'idcpr', 'permiso' => 'compras', 'sesion' => 'modifica_compra'],
 ];
+
+// unidades por producto de la venta que se esta modificando: siguen descontadas del stock hasta
+// confirmar (ahi se anula la original y vuelven), asi que tambien se pueden vender. [idprod => unidades]
+function unidades_venta_modificada($connect)
+{
+    $idord = (int)($_SESSION['modifica_venta']['idord'] ?? 0);
+    if (!$idord) {
+        return [];
+    }
+    $q = $connect->prepare(
+        'SELECT d.idprod, SUM(d.cantidad) FROM orders_detalle d INNER JOIN orders o ON o.idord = d.idord
+          WHERE d.idord = ? AND o.anulada = 0 GROUP BY d.idprod'
+    );
+    $q->execute([$idord]);
+    return array_map('intval', $q->fetchAll(PDO::FETCH_KEY_PAIR));
+}
+
+// stock que se puede vender de un producto: el actual mas lo que devuelve la venta que se modifica
+function stock_para_venta($connect, $idprod, $stockActual)
+{
+    return (int)$stockActual + (unidades_venta_modificada($connect)[(int)$idprod] ?? 0);
+}
 
 // lineas del carrito del usuario con los datos actuales del producto
 function carrito_lineas($connect, $tipo, $user_id)
@@ -307,7 +336,8 @@ function carrito_agregar($connect, $tipo, $user_id, $idprod, $nombre, $precio, $
     if (!$linea) {
         $connect->prepare("INSERT INTO {$c['tabla']} (user_id, idprod, name, price, quantity) VALUES (?, ?, ?, ?, ?)")
                 ->execute([$user_id, $idprod, $nombre, $precio, $cantidad]);
-        avisar_y_redirigir('¡Registrado!', 'Agregado correctamente', 'success', 'cart.php');
+        avisar_y_redirigir('¡Registrado!', 'Agregado: ' . $nombre . ' (' . (int)$cantidad . ')', 'success', 'cart.php',
+                           carrito_resumen($connect, $tipo, $user_id, $idprod));
         return;
     }
 
@@ -322,7 +352,16 @@ function carrito_agregar($connect, $tipo, $user_id, $idprod, $nombre, $precio, $
         ? "UPDATE {$c['tabla']} SET quantity = ?, price = ? WHERE {$c['id']} = ?"
         : "UPDATE {$c['tabla']} SET quantity = ? WHERE {$c['id']} = ?";
     $connect->prepare($sql)->execute($tipo === 'compra' ? [$total, $precio, $linea->idlinea] : [$total, $linea->idlinea]);
-    avisar_y_redirigir('¡Actualizado!', 'Ya estaba en el carrito: se sumaron ' . (int)$cantidad . ' unidad(es). Ahora tienes ' . $total . '.', 'success', 'cart.php');
+    avisar_y_redirigir('¡Actualizado!', 'Ya estaba en el carrito: se sumaron ' . (int)$cantidad . ' unidad(es). Ahora tienes ' . $total . '.', 'success', 'cart.php',
+                       carrito_resumen($connect, $tipo, $user_id, $idprod));
+}
+
+// lo que la lista de productos actualiza sin recargar: lineas del carrito y unidades del producto
+function carrito_resumen($connect, $tipo, $user_id, $idprod)
+{
+    $lineas = array_column(carrito_lineas($connect, $tipo, $user_id), null, 'idprod');
+    return ['lineas' => count($lineas), 'idprod' => (int)$idprod, 'idlinea' => (int)($lineas[$idprod]['idlinea'] ?? 0),
+            'enCarrito' => (int)($lineas[$idprod]['quantity'] ?? 0)];
 }
 
 // quita una linea del carrito propio (nunca la de otro usuario)
@@ -336,6 +375,57 @@ function carrito_quitar($connect, $tipo, $idlinea, $user_id)
 function carrito_vaciar($connect, $tipo, $user_id)
 {
     $connect->prepare('DELETE FROM ' . CARRITOS[$tipo]['tabla'] . ' WHERE user_id = ?')->execute([$user_id]);
+}
+
+// TablaPaginada: responde a una tabla de DataTables en modo servidor solo la pagina que se esta viendo,
+// para que el modulo cargue rapido aunque haya miles de registros. Lee draw, start, length, search y order.
+//   $desde     "FROM ... WHERE ..." sin LIMIT ni ORDER (con ? en $params)
+//   $campos    columnas del SELECT
+//   $orden     por indice de columna de la tabla: expresion SQL para ordenar (o null si no se ordena por ella);
+//              'defecto' => orden cuando la tabla no pide ninguno
+//   $buscar    expresiones SQL donde busca el texto del buscador (LIKE)
+//   $fila      function ($registro) que devuelve las celdas (html) de una fila
+function tabla_paginada($connect, $campos, $desde, $params, $orden, $buscar, $fila)
+{
+    $inicio = max(0, (int)($_GET['start'] ?? 0));
+    $largo  = min(100, max(1, (int)($_GET['length'] ?? 25)));
+    $texto  = trim((string)($_GET['search']['value'] ?? ''));
+
+    $total = $connect->prepare("SELECT COUNT(*) $desde");
+    $total->execute($params);
+    $total = (int)$total->fetchColumn();
+
+    $filtro = '';
+    $paramsFiltro = $params;
+    if ($texto !== '' && $buscar) {
+        $filtro = ' AND (' . implode(' OR ', array_map(fn($c) => "$c LIKE ?", $buscar)) . ')';
+        foreach ($buscar as $c) {
+            $paramsFiltro[] = '%' . $texto . '%';
+        }
+    }
+    $filtrados = $total;
+    if ($filtro !== '') {
+        $q = $connect->prepare("SELECT COUNT(*) $desde $filtro");
+        $q->execute($paramsFiltro);
+        $filtrados = (int)$q->fetchColumn();
+    }
+
+    // solo se ordena por columnas de la lista blanca $orden
+    $col = (int)($_GET['order'][0]['column'] ?? -1);
+    $dir = strtolower((string)($_GET['order'][0]['dir'] ?? 'asc')) === 'desc' ? 'DESC' : 'ASC';
+    $ordenSql = ($col >= 0 && !empty($orden[$col])) ? $orden[$col] . " $dir" : ($orden['defecto'] ?? '1');
+
+    $q = $connect->prepare("SELECT $campos $desde $filtro ORDER BY $ordenSql LIMIT $largo OFFSET $inicio");
+    $q->execute($paramsFiltro);
+
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        'draw'            => (int)($_GET['draw'] ?? 0),
+        'recordsTotal'    => $total,
+        'recordsFiltered' => $filtrados,
+        'data'            => array_map($fila, $q->fetchAll()),
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
 }
 
 // correo opcional: '' si viene vacio, null si no es valido o pasa de $max caracteres
