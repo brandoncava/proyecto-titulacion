@@ -91,3 +91,6 @@ ckcomputers_system/
 - Scripts de cambios: `backend/sql/01` a `13` (ya incluidos en `database/ckcomputers_db.sql`; solo hacen falta para actualizar una base anterior, en ese orden).
 - Las compras se pueden anular (solo el administrador): se descuenta el stock y queda en el kardex. Se registra la serie, número y fecha del comprobante del proveedor y no se permite repetirlo.
 - Módulo de series (administrador) para activar series de boleta y factura (solo una activa por comprobante); reporte de compras; el código de producto es único y el stock se valida como número.
+## Autores
+- Cava Portales, Brandon George
+- Vargas Pereda, Jose Alberto Junior
