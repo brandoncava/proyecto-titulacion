@@ -49,7 +49,7 @@ Todos los datos de la base son de prueba.
 
 | Usuario    | Contraseña      | Perfil        | Qué puede hacer |
 |------------|-----------------|---------------|-----------------|
-| `admin01`  | `Admin2026!`    | Administrador | Todo: dashboard, reportes, usuarios, garantías, modificar y anular ventas y compras |
+| `admin01`  | `Admin2026!`    | Administrador | Todo: dashboard, reportes, usuarios, garantías, series, modificar y anular ventas y compras |
 | `admin02`  | `Admin2026!`    | Administrador | Igual que `admin01` |
 | `cajero01` | `Cajero2026!`   | Cajero        | Ventas, productos (ver), clientes y garantías |
 | `emple01`  | `Empleado2026!` | Empleado      | Compras, productos, proveedores, categorías, marcas y garantías |
