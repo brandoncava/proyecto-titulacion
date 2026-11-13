@@ -23,6 +23,7 @@ if ($metodo !== '') {
 $resumen = $connect->prepare(
     "SELECT SUM(o.anulada = 0)                                                   AS ventas,
             COALESCE(SUM(CASE WHEN o.anulada = 0 THEN o.total_price END), 0)     AS total,
+            COALESCE(SUM(CASE WHEN o.anulada = 0 THEN o.subtotal_sin_igv END), 0) AS sin_igv,
             COALESCE(SUM(CASE WHEN o.anulada = 0 THEN o.igv END), 0)             AS igv,
             SUM(o.anulada = 1)                                                   AS anuladas,
             COALESCE(SUM(CASE WHEN o.anulada = 1 THEN o.total_price END), 0)     AS total_anulado
@@ -107,6 +108,13 @@ require __DIR__ . '/../layout/cabecera.php';
                             <span class="las la-money-bill"></span>
                         </div>
                         <div class="card-progress"><small>Total vendido (con IGV)</small></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-head">
+                            <h2>S/<?php echo number_format($r->sin_igv, 2); ?></h2>
+                            <span class="las la-coins"></span>
+                        </div>
+                        <div class="card-progress"><small>Total vendido (sin IGV)</small></div>
                     </div>
                     <div class="card">
                         <div class="card-head">
