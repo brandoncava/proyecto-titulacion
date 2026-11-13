@@ -47,7 +47,7 @@ $pagos = $porPago->fetchAll();
 
 $filtroEstado = ['validas' => ' AND o.anulada = 0', 'anuladas' => ' AND o.anulada = 1', 'todas' => ''][$estado];
 $lista = $connect->prepare(
-    "SELECT o.idord, o.placed_on, o.tipc, o.serie, o.numero, o.nomcl, o.method, o.igv, o.total_price, o.anulada, o.motivo_anulacion,
+    "SELECT o.idord, o.placed_on, o.tipc, o.serie, o.numero, o.nomcl, o.method, o.subtotal_sin_igv, o.igv, o.total_price, o.anulada, o.motivo_anulacion,
             u.nombre AS vendedor,
             (SELECT GROUP_CONCAT(CONCAT(pg.metodo, IF(pg.num_operacion IS NULL, '', CONCAT(' #', pg.num_operacion))) SEPARATOR ', ')
                FROM orders_pagos pg WHERE pg.idord = o.idord) AS detalle_pago
@@ -174,6 +174,7 @@ require __DIR__ . '/../layout/cabecera.php';
                                     <th><span class="las la-sort"></span>Cliente</th>
                                     <th><span class="las la-sort"></span>Vendedor</th>
                                     <th><span class="las la-sort"></span>Pago</th>
+                                    <th><span class="las la-sort"></span>Sin IGV</th>
                                     <th><span class="las la-sort"></span>IGV</th>
                                     <th><span class="las la-sort"></span>Total</th>
                                     <th><span class="las la-sort"></span>Estado</th>
@@ -182,14 +183,15 @@ require __DIR__ . '/../layout/cabecera.php';
                             </thead>
                             <tbody>
 <?php foreach ($ventas as $v): ?>
-                                <tr>
+                                <tr<?php echo (int)$v->anulada === 1 ? ' data-anulada' : ''; ?>>
                                     <td><?php echo e($v->idord); ?></td>
                                     <td data-order="<?php echo e($v->placed_on); ?>"><?php echo date('d/m/Y H:i', strtotime($v->placed_on)); ?></td>
                                     <td><?php echo e($v->tipc); ?><?php echo !empty($v->serie) ? ' ' . e(formato_comprobante($v->serie, $v->numero)) : ''; ?></td>
                                     <td><?php echo e($v->nomcl); ?></td>
                                     <td><?php echo e($v->vendedor ?? '—'); ?></td>
                                     <td><?php echo e($v->detalle_pago ?: $v->method); ?></td>
-                                    <td>S/<?php echo number_format($v->igv, 2); ?></td>
+                                    <td data-order="<?php echo e($v->subtotal_sin_igv); ?>">S/<?php echo number_format($v->subtotal_sin_igv, 2); ?></td>
+                                    <td data-order="<?php echo e($v->igv); ?>">S/<?php echo number_format($v->igv, 2); ?></td>
                                     <td data-order="<?php echo e($v->total_price); ?>">S/<?php echo number_format($v->total_price, 2); ?></td>
 <?php if ((int)$v->anulada === 1): ?>
                                     <td><span class="chip peligro" title="<?php echo e($v->motivo_anulacion); ?>">ANULADA</span></td>
@@ -200,6 +202,16 @@ require __DIR__ . '/../layout/cabecera.php';
                                 </tr>
 <?php endforeach; ?>
                             </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th>Total válidas</th>
+                                    <th></th><th></th><th></th><th></th><th></th>
+                                    <th data-sumar></th>
+                                    <th data-sumar></th>
+                                    <th data-sumar></th>
+                                    <th></th><th></th>
+                                </tr>
+                            </tfoot>
                         </table>
 <?php else: ?>
                         <p class="sin-datos">No hay ventas en este rango.</p>

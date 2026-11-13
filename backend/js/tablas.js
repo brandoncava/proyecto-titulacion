@@ -73,7 +73,30 @@
             dom: 'Bfrtip',
             language: idioma,
             pagingType: 'simple_numbers',
-            buttons: ['copy', 'csv', 'excel', botonPdf, 'print']
+            // footer: la fila de totales (<tfoot>) tambien sale en lo que se exporta
+            buttons: [
+                { extend: 'copy', footer: true },
+                { extend: 'csv', footer: true },
+                { extend: 'excel', footer: true },
+                $.extend({ footer: true }, botonPdf),
+                { extend: 'print', footer: true }
+            ],
+            // celdas <th data-sumar> del pie: suman el data-order de su columna en las filas
+            // que deja el buscador, sin las anuladas (<tr data-anulada>)
+            footerCallback: function () {
+                var api = this.api();
+                $(api.table().footer()).find('[data-sumar]').each(function () {
+                    var col = $(this).index();
+                    var total = 0;
+                    api.rows({ search: 'applied' }).every(function () {
+                        var fila = this.node();
+                        if (!fila.hasAttribute('data-anulada')) {
+                            total += parseFloat(fila.cells[col].getAttribute('data-order')) || 0;
+                        }
+                    });
+                    $(this).text('S/' + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                });
+            }
         };
         if (url) {
             $.extend(opciones, {

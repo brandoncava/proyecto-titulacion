@@ -63,7 +63,7 @@ $proveedoresTotal = $porProveedor->fetchAll();
 
 $filtroEstado = ['validas' => ' AND o.anulada = 0', 'anuladas' => ' AND o.anulada = 1', 'todas' => ''][$estado];
 $lista = $connect->prepare(
-    "SELECT o.idordpur, o.placed_on, o.tipc, o.serie_doc, o.numero_doc, o.fecha_emision, p.nomprv, o.method, o.igv, o.total_price,
+    "SELECT o.idordpur, o.placed_on, o.tipc, o.serie_doc, o.numero_doc, o.fecha_emision, p.nomprv, o.method, o.subtotal_sin_igv, o.igv, o.total_price,
             o.anulada, o.motivo_anulacion, o.modificada_on, u.nombre AS comprador
        FROM orders_purchase o
        INNER JOIN proveedores p ON p.idprov = o.idprov
@@ -204,6 +204,7 @@ require __DIR__ . '/../layout/cabecera.php';
                                     <th><span class="las la-sort"></span>Proveedor</th>
                                     <th><span class="las la-sort"></span>Comprador</th>
                                     <th><span class="las la-sort"></span>Pago</th>
+                                    <th><span class="las la-sort"></span>Sin IGV</th>
                                     <th><span class="las la-sort"></span>IGV</th>
                                     <th><span class="las la-sort"></span>Total</th>
                                     <th><span class="las la-sort"></span>Estado</th>
@@ -212,7 +213,7 @@ require __DIR__ . '/../layout/cabecera.php';
                             </thead>
                             <tbody>
 <?php foreach ($compras as $v): ?>
-                                <tr>
+                                <tr<?php echo (int)$v->anulada === 1 ? ' data-anulada' : ''; ?>>
                                     <td><?php echo e($v->idordpur); ?></td>
                                     <td data-order="<?php echo e($v->placed_on); ?>"><?php echo date('d/m/Y H:i', strtotime($v->placed_on)); ?></td>
                                     <td><?php echo e($v->tipc); ?><?php echo !empty($v->serie_doc) ? ' ' . e($v->serie_doc . '-' . $v->numero_doc) : ''; ?></td>
@@ -220,7 +221,8 @@ require __DIR__ . '/../layout/cabecera.php';
                                     <td><?php echo e($v->nomprv); ?></td>
                                     <td><?php echo e($v->comprador ?? '—'); ?></td>
                                     <td><?php echo e($v->method); ?></td>
-                                    <td>S/<?php echo number_format($v->igv, 2); ?></td>
+                                    <td data-order="<?php echo e($v->subtotal_sin_igv); ?>">S/<?php echo number_format($v->subtotal_sin_igv, 2); ?></td>
+                                    <td data-order="<?php echo e($v->igv); ?>">S/<?php echo number_format($v->igv, 2); ?></td>
                                     <td data-order="<?php echo e($v->total_price); ?>">S/<?php echo number_format($v->total_price, 2); ?></td>
 <?php if ((int)$v->anulada === 1): ?>
                                     <td><span class="chip peligro" title="<?php echo e($v->motivo_anulacion); ?>">ANULADA</span></td>
@@ -231,6 +233,16 @@ require __DIR__ . '/../layout/cabecera.php';
                                 </tr>
 <?php endforeach; ?>
                             </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th>Total válidas</th>
+                                    <th></th><th></th><th></th><th></th><th></th><th></th>
+                                    <th data-sumar></th>
+                                    <th data-sumar></th>
+                                    <th data-sumar></th>
+                                    <th></th><th></th>
+                                </tr>
+                            </tfoot>
                         </table>
 <?php else: ?>
                         <p class="sin-datos">No hay compras con estos filtros.</p>
